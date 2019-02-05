@@ -1,6 +1,7 @@
 module github.com/thommil/tge
 
 require (
+	github.com/cweill/gotests v1.5.2
 	github.com/go-gl/glfw v0.0.0-20181213070059-819e8ce5125f
 	github.com/karrick/godirwalk v1.7.8
 	github.com/mdempsky/gocode v0.0.0-20190203001940-7fb65232883f
