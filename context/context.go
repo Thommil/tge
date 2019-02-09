@@ -1,5 +1,5 @@
 package context
 
+// Context API
 type Context interface {
-	Init() error
 }
