@@ -1,0 +1,11 @@
+```plantuml
+@startuml
+app -- tge.runtime : use
+
+tge.runtime *-- tge.context
+tge.runtime *-- tge.ui
+tge.runtime *-- tge.physics
+tge.runtime *-- tge.sound
+
+@enduml
+```

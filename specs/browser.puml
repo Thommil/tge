@@ -1,0 +1,11 @@
+```plantuml
+@startuml
+
+tge.runtime <|-- "syscall.js"
+tge.context <|-- "github.com/goxjs.gl"
+tge.ui <|-- "syscall.js"
+tge.physics <|-- "github.com/jakecoffman.cp"
+tge.sound
+
+@enduml
+```

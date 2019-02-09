@@ -1,0 +1,12 @@
+```plantuml
+@startuml
+
+tge.runtime <|-- "github.com/go-gl.glfw"
+tge.context <|-- "github.com/goxjs.gl"
+tge.ui <|-- "github.com/golang-ui.nuklear"
+"github.com/goxjs.gl" -- "github.com/golang-ui.nuklear" : use
+tge.physics <|-- "github.com/jakecoffman.cp"
+tge.sound
+
+@enduml
+```
