@@ -1,5 +1,5 @@
 ```plantuml
-@startuml
+@startuml API
 app -- tge.runtime : use
 app : Create(settings Settings) error
 app : Start(runtime Runtime) error
@@ -17,6 +17,5 @@ tge.runtime : GetSound() Sound
 tge.runtime *-- tge.ui
 tge.runtime *-- tge.physics
 tge.runtime *-- tge.sound
-
 @enduml
 ```
