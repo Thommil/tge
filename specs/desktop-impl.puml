@@ -1,0 +1,18 @@
+```plantuml
+@startuml Desktop Implementation
+class tge << (P,#FF7700) Package >>
+tge <|-- "github.com/go-gl.glfw"
+
+class renderer << (P,#FF7700) Package >>
+renderer <|-- "github.com/goxjs.gl"
+
+class ui << (P,#FF7700) Package >>
+ui <|-- "github.com/golang-ui.nuklear"
+"github.com/goxjs.gl" <-- "github.com/golang-ui.nuklear" : use
+
+class physics << (P,#FF7700) Package >>
+physics <|-- "github.com/jakecoffman.cp"
+
+class player << (P,#FF7700) Package >>
+@enduml
+```
