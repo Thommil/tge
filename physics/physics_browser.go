@@ -1,3 +1,3 @@
-// +build js
+// +build browser
 
 package physics
