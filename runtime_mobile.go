@@ -7,6 +7,6 @@ import (
 )
 
 func backend_Instanciate(app App) error {
-	log.Println("Creation of mobile runtime")
+	log.Println("backend_Instanciate()")
 	return nil
 }
