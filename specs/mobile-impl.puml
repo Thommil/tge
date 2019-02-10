@@ -1,10 +1,18 @@
 ```plantuml
 @startuml Mobile Implementation
-tge.runtime <|-- "golang.org/x.mobile"
-tge.context <|-- "github.com/goxjs.gl"
-tge.ui <|-- "github.com/golang-ui.nuklear"
-"github.com/goxjs.gl" -- "github.com/golang-ui.nuklear" : use
-tge.physics <|-- "github.com/jakecoffman.cp"
-tge.sound
+class tge << (P,#FF7700) Package >>
+tge <|-- "golang.org/x.mobile"
+
+class renderer << (P,#FF7700) Package >>
+renderer <|-- "github.com/goxjs.gl"
+
+class ui << (P,#FF7700) Package >>
+ui <|-- "github.com/golang-ui.nuklear"
+"github.com/goxjs.gl" <-- "github.com/golang-ui.nuklear" : use
+
+class physics << (P,#FF7700) Package >>
+physics <|-- "github.com/jakecoffman.cp"
+
+class player << (P,#FF7700) Package >>
 @enduml
 ```

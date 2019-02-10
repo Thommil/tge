@@ -2,4 +2,4 @@
 // +build !android
 // +build !ios
 
-package sound
+package player

@@ -1,21 +1,44 @@
 ```plantuml
 @startuml API
-app -- tge.runtime : use
-app : Create(settings Settings) error
-app : Start(runtime Runtime) error
-app : Resize(width int, height int) error
-app : Resume() error
-app : Pause() error
-app : Dispose() error
+' Components
+interface App {
+    Create(settings Settings) error
+    Start() error
+    Resize(width int, height int)
+    Resume()
+    Render(r Renderer, u UI, p Player)
+    Tick(p Physics)
+    Pause()
+    Dispose()
+}
 
-tge.runtime *-- tge.context
-tge.runtime : GetContext() Context
-tge.runtime : GetUI() UI
-tge.runtime : GetPhysics() Physics
-tge.runtime : GetSound() Sound
+class tge << (P,#FF7700) Package >> {
+    {static} Instanciate(app *App) error
+}
 
-tge.runtime *-- tge.ui
-tge.runtime *-- tge.physics
-tge.runtime *-- tge.sound
+interface Runtime {
+}
+
+interface Renderer {
+}
+
+interface UI {
+}
+
+interface Player {
+}
+
+interface Physics {
+}
+
+' Relations
+App --> tge : call
+tge --> Runtime : instanciate
+App <-- Runtime : use
+
+Runtime *-- Renderer
+Runtime *-- UI
+Runtime *-- Player
+Runtime *-- Physics
 @enduml
 ```

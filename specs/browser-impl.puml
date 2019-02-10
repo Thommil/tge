@@ -1,9 +1,17 @@
 ```plantuml
 @startuml Browser Implementation
-tge.runtime <|-- "syscall.js"
-tge.context <|-- "github.com/goxjs.gl"
-tge.ui <|-- "syscall.js"
-tge.physics <|-- "github.com/jakecoffman.cp"
-tge.sound
+class tge << (P,#FF7700) Package >>
+tge <|-- "syscall.js"
+
+class renderer << (P,#FF7700) Package >>
+renderer <|-- "github.com/goxjs.gl"
+
+class ui << (P,#FF7700) Package >>
+ui <|-- "syscall.js"
+
+class physics << (P,#FF7700) Package >>
+physics <|-- "github.com/jakecoffman.cp"
+
+class player << (P,#FF7700) Package >>
 @enduml
 ```

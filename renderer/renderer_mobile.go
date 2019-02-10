@@ -1,3 +1,3 @@
 // +build android ios
 
-package sound
+package renderer
