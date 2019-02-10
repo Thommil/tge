@@ -1,6 +1,8 @@
 package tge
 
 import (
+	log "log"
+
 	physics "github.com/thommil/tge/physics"
 	player "github.com/thommil/tge/player"
 	renderer "github.com/thommil/tge/renderer"
@@ -25,13 +27,15 @@ type Runtime interface {
 
 // Instanciate is the main entry point
 func Instanciate(app App) {
+	log.Println("Instanciate()")
 	app.Create(Settings{})
 
 	err := backend_Instanciate(app)
 
 	if err != nil {
-
+		log.Fatalln(err)
 	}
+
 	//app.Start()
 	//app.Resume()
 	//app.Resize()
