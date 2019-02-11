@@ -31,7 +31,7 @@ func Instanciate(app App) {
 	log.Println("Instanciate()")
 	app.Create(Settings{})
 
-	err := backend_Instanciate(app)
+	err := doInstanciate(app)
 
 	if err != nil {
 		log.Fatalln(err)
