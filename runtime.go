@@ -27,6 +27,7 @@ type Runtime interface {
 
 // Instanciate is the main entry point
 func Instanciate(app App) {
+	log.Println("MASTER()")
 	log.Println("Instanciate()")
 	app.Create(Settings{})
 
