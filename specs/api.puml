@@ -9,6 +9,7 @@ interface App {
     Render(r Renderer, u UI, p Player)
     Tick(p Physics)
     Pause()
+    Stop()
     Dispose()
 }
 

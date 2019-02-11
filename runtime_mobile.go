@@ -6,7 +6,7 @@ import (
 	log "log"
 )
 
-func doInstanciate(app App) error {
-	log.Println("backend_Instanciate()")
+func doInstanciate(app App, settings *Settings) error {
+	log.Println("doInstanciate()")
 	return nil
 }
