@@ -14,7 +14,7 @@ interface App {
 }
 
 class tge << (P,#FF7700) Package >> {
-    {static} Instanciate(app *App) error
+    {static} Run(app *App) error
 }
 
 interface Runtime {

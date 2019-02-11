@@ -4,7 +4,7 @@ package tge
 
 import log "log"
 
-func doInstanciate(app App, settings *Settings) error {
-	log.Println("doInstanciate()")
+func doRun(app App, settings *Settings) error {
+	log.Println("doRun()")
 	return nil
 }

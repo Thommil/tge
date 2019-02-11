@@ -15,15 +15,15 @@ func init() {
 	runtime.LockOSThread()
 }
 
-func doInstanciate(app App, settings *Settings) error {
-	log.Println("doInstanciate()")
+func doRun(app App, settings *Settings) error {
+	log.Println("doRun()")
 	err := glfw.Init()
 	if err != nil {
 		return err
 	}
 	defer glfw.Terminate()
 
-	window, err := glfw.CreateWindow(640, 480, "Testing", nil, nil)
+	window, err := glfw.CreateWindow(640, 480, settings.Name, nil, nil)
 	if err != nil {
 		return err
 	}

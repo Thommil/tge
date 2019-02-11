@@ -30,14 +30,14 @@ func init() {
 	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
 }
 
-// Instanciate is the main entry point
-func Instanciate(app App) {
+// Run is the main entry point
+func Run(app App) {
 	log.Println("Instanciate()")
 
 	settings := Settings{}
 	app.Create(&settings)
 
-	err := doInstanciate(app, &settings)
+	err := doRun(app, &settings)
 	if err != nil {
 		log.Fatalln(err)
 	}
