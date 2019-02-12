@@ -11,13 +11,14 @@ import (
 
 // App defines API to implement for TGE applications
 type App interface {
-	Create(settings Settings) error
-	Start(runtime Runtime) error
+	Create(settings *Settings) error
+	Start() error
 	Resize(width int, height int)
 	Resume()
 	Render(renderer renderer.Renderer, ui ui.UI, player player.Player)
 	Tick(physics physics.Physics)
 	Pause()
+	Stop()
 	Dispose() error
 }
 
@@ -25,23 +26,20 @@ type App interface {
 type Runtime interface {
 }
 
-// Instanciate is the main entry point
-func Instanciate(app App) {
-	log.Println("Instanciate()")
-	app.Create(Settings{})
+func init() {
+	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
+}
 
-	err := doInstanciate(app)
+// Run is the main entry point
+func Run(app App) {
+	log.Println("Run()")
 
+	settings := Settings{}
+	app.Create(&settings)
+
+	err := doRun(app, &settings)
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	//app.Start()
-	//app.Resume()
-	//app.Resize()
-
-	//app.Render()
-	//app.Tick()
-
-	//app.Dispose()
+	defer app.Dispose()
 }

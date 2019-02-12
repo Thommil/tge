@@ -15,25 +15,45 @@ func init() {
 	runtime.LockOSThread()
 }
 
-func doInstanciate(app App) error {
-	log.Println("backend_Instanciate()")
+func doRun(app App, settings *Settings) error {
+	log.Println("doRun()")
 	err := glfw.Init()
 	if err != nil {
 		return err
 	}
 	defer glfw.Terminate()
 
-	window, err := glfw.CreateWindow(640, 480, "Testing", nil, nil)
+	window, err := glfw.CreateWindow(640, 480, settings.Name, nil, nil)
 	if err != nil {
 		return err
 	}
 
+	window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
+		app.Resize(width, height)
+	})
+
+	window.SetCloseCallback(func(w *glfw.Window) {
+		app.Pause()
+		app.Stop()
+	})
+
+	window.SetFocusCallback(func(w *glfw.Window, focused bool) {
+		if focused {
+			app.Resume()
+		} else {
+			app.Pause()
+		}
+	})
+
 	window.MakeContextCurrent()
+	app.Start()
 
 	for !window.ShouldClose() {
-		// Do OpenGL stuff.
+		//app.Render()
+		//app.Tick()
 		window.SwapBuffers()
 		glfw.PollEvents()
 	}
+
 	return nil
 }
