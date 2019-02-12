@@ -23,7 +23,7 @@ func doRun(app App, settings *Settings) error {
 	}
 	defer glfw.Terminate()
 
-	window, err := glfw.CreateWindow(640, 480, settings.Name, nil, nil)
+	window, err := glfw.CreateWindow(settings.Width, settings.Height, settings.Name, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -47,6 +47,7 @@ func doRun(app App, settings *Settings) error {
 
 	window.MakeContextCurrent()
 	app.Start()
+	window.Show()
 
 	for !window.ShouldClose() {
 		//app.Render()

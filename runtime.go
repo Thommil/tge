@@ -34,10 +34,10 @@ func init() {
 func Run(app App) {
 	log.Println("Run()")
 
-	settings := Settings{}
-	app.Create(&settings)
+	settings := &defaultSettings
+	app.Create(settings)
 
-	err := doRun(app, &settings)
+	err := doRun(app, settings)
 	if err != nil {
 		log.Fatalln(err)
 	}
