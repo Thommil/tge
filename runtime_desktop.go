@@ -9,20 +9,42 @@ import (
 	runtime "runtime"
 
 	glfw "github.com/go-gl/glfw/v3.2/glfw"
+	physics "github.com/thommil/tge/physics"
+	player "github.com/thommil/tge/player"
+	renderer "github.com/thommil/tge/renderer"
+	ui "github.com/thommil/tge/ui"
 )
 
+// Runtime implementation
+type desktopRuntime struct {
+	window   *glfw.Window
+	renderer renderer.Renderer
+	ui       ui.UI
+	player   player.Player
+	physics  physics.Physics
+}
+
+func (runtime desktopRuntime) Stop() {
+	runtime.window.SetShouldClose(true)
+}
+
+// init ensure that we're running on main thread
 func init() {
 	runtime.LockOSThread()
 }
 
+// Main
 func doRun(app App, settings *Settings) error {
 	log.Println("doRun()")
+
+	// Init
 	err := glfw.Init()
 	if err != nil {
 		return err
 	}
 	defer glfw.Terminate()
 
+	// Fullscreen support
 	var monitor *glfw.Monitor
 	if settings.Fullscreen {
 		monitor = glfw.GetPrimaryMonitor()
@@ -35,32 +57,49 @@ func doRun(app App, settings *Settings) error {
 		glfw.WindowHint(glfw.RefreshRate, videoMode.RefreshRate)
 	}
 
+	// Window creation
 	window, err := glfw.CreateWindow(settings.Width, settings.Height, settings.Name, monitor, nil)
 	if err != nil {
 		return err
 	}
 
+	// Window callbacks
+	isFirstStart := true
 	window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
-		app.Resize(width, height)
+		app.OnResize(width, height)
 	})
 
 	window.SetCloseCallback(func(w *glfw.Window) {
-		app.Pause()
-		app.Stop()
+		app.OnPause()
+		app.OnStop()
 	})
 
 	window.SetFocusCallback(func(w *glfw.Window, focused bool) {
 		if focused {
-			app.Resume()
+			app.OnResume()
+			if runtime.GOOS == "darwin" && isFirstStart {
+				isFirstStart = false
+				app.OnResize(settings.Width, settings.Height)
+			}
 		} else {
-			app.Pause()
+			app.OnPause()
 		}
 	})
 
+	// Start
 	window.MakeContextCurrent()
-	app.Start()
-	window.Focus()
 
+	desktopRuntime := desktopRuntime{
+		window: window,
+	}
+	app.OnStart(&desktopRuntime)
+
+	// OS Specific
+	if runtime.GOOS == "windows" {
+		app.OnResume()
+	}
+
+	// Loop
 	for !window.ShouldClose() {
 		//app.Render()
 		//app.Tick()

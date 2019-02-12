@@ -11,19 +11,20 @@ import (
 
 // App defines API to implement for TGE applications
 type App interface {
-	Create(settings *Settings) error
-	Start() error
-	Resize(width int, height int)
-	Resume()
-	Render(renderer renderer.Renderer, ui ui.UI, player player.Player)
-	Tick(physics physics.Physics)
-	Pause()
-	Stop()
-	Dispose() error
+	OnCreate(settings *Settings) error
+	OnStart(runtime Runtime) error
+	OnResize(width int, height int)
+	OnResume()
+	OnRender(renderer renderer.Renderer, ui ui.UI, player player.Player)
+	OnTick(physics physics.Physics)
+	OnPause()
+	OnStop()
+	OnDispose() error
 }
 
 // Runtime API
 type Runtime interface {
+	Stop()
 }
 
 func init() {
@@ -35,11 +36,11 @@ func Run(app App) {
 	log.Println("Run()")
 
 	settings := &defaultSettings
-	app.Create(settings)
+	app.OnCreate(settings)
 
 	err := doRun(app, settings)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer app.Dispose()
+	defer app.OnDispose()
 }
