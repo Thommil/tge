@@ -1,6 +1,8 @@
 #!/bin/sh
 
 # Env
+TGE_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 if [ $# -ne 2 ] ; then
     echo "Synopsis : build.sh PROJECT_PATH TARGET"
     echo "  Available targets  : desktop android ios browser"
