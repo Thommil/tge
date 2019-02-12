@@ -75,7 +75,9 @@ func doRun(app App, settings *Settings) error {
 	})
 
 	window.SetCloseCallback(func(w *glfw.Window) {
-		app.OnPause()
+		if !paused {
+			app.OnPause()
+		}
 		app.OnStop()
 	})
 
