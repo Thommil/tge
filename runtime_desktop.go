@@ -7,6 +7,7 @@ package tge
 import (
 	log "log"
 	runtime "runtime"
+	sync "sync"
 
 	glfw "github.com/go-gl/glfw/v3.2/glfw"
 	physics "github.com/thommil/tge/physics"
@@ -64,6 +65,7 @@ func doRun(app App, settings *Settings) error {
 	}
 
 	// Window callbacks
+	var resizeAtStart sync.Once
 	window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
 		// Windows minify issue
 		if width > 0 {
@@ -79,6 +81,11 @@ func doRun(app App, settings *Settings) error {
 	window.SetFocusCallback(func(w *glfw.Window, focused bool) {
 		if focused {
 			app.OnResume()
+			resizeAtStart.Do(func() {
+				if runtime.GOOS != "windows" {
+					app.OnResize(settings.Width, settings.Height)
+				}
+			})
 		} else {
 			app.OnPause()
 		}
@@ -95,8 +102,8 @@ func doRun(app App, settings *Settings) error {
 	// OS Specific
 	if runtime.GOOS == "windows" {
 		app.OnResume()
+		app.OnResize(settings.Width, settings.Height)
 	}
-	app.OnResize(settings.Width, settings.Height)
 
 	// Loop
 	for !window.ShouldClose() {
