@@ -6,8 +6,8 @@ interface App {
     OnStart(Runtime) error
     OnResize(int, int)
     OnResume()
-    OnRender(Renderer, UI, Player)
-    OnTick(Physics)
+    OnRender(Duration)
+    OnTick(Duration)
     OnPause()
     OnStop()
     OnDispose()
@@ -18,6 +18,10 @@ class tge << (P,#FF7700) Package >> {
 }
 
 interface Runtime {
+    GetRenderer() Renderer
+    GetUI() UI
+    GetPlayer() Player
+    GetPhysics() Physics
     Stop()
 }
 

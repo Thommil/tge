@@ -8,6 +8,7 @@ import (
 	log "log"
 	runtime "runtime"
 	sync "sync"
+	"time"
 
 	glfw "github.com/go-gl/glfw/v3.2/glfw"
 	physics "github.com/thommil/tge/physics"
@@ -18,6 +19,7 @@ import (
 
 // Runtime implementation
 type desktopRuntime struct {
+	app      App
 	window   *glfw.Window
 	renderer renderer.Renderer
 	ui       ui.UI
@@ -25,7 +27,25 @@ type desktopRuntime struct {
 	physics  physics.Physics
 }
 
+func (runtime desktopRuntime) GetRenderer() renderer.Renderer {
+	return runtime.renderer
+}
+
+func (runtime desktopRuntime) GetUI() ui.UI {
+	return runtime.ui
+}
+
+func (runtime desktopRuntime) GetPlayer() player.Player {
+	return runtime.player
+}
+
+func (runtime desktopRuntime) GetPhysics() physics.Physics {
+	return runtime.physics
+}
+
 func (runtime desktopRuntime) Stop() {
+	runtime.app.OnPause()
+	runtime.app.OnStop()
 	runtime.window.SetShouldClose(true)
 }
 
@@ -99,23 +119,43 @@ func doRun(app App, settings *Settings) error {
 	// Start
 	window.MakeContextCurrent()
 
+	// Instanciate Runtime
 	desktopRuntime := desktopRuntime{
+		app:    app,
 		window: window,
 	}
 	app.OnStart(&desktopRuntime)
 
 	// OS Specific
 	if runtime.GOOS == "windows" {
-		paused = false
 		app.OnResume()
+		paused = false
 		app.OnResize(settings.Width, settings.Height)
 	}
 
-	// Loop
+	// Ticker Loop
+	tpsDelay := time.Duration(1000000000 / settings.Physics.TPS)
+	ticker := time.NewTicker(tpsDelay)
+	defer ticker.Stop()
+	go func() {
+		for range ticker.C {
+			if !paused {
+				app.OnTick(tpsDelay)
+			}
+		}
+	}()
+
+	// Render Loop
+	fpsDelay := time.Duration(1000000000 / settings.Renderer.FPS)
+	var elapsedFpsTime time.Duration
 	for !window.ShouldClose() {
-		//app.Render()
-		//app.Tick()
-		window.SwapBuffers()
+		if !paused {
+			startFps := time.Now()
+			app.OnRender(elapsedFpsTime)
+			window.SwapBuffers()
+			elapsedFpsTime = (fpsDelay - time.Since(startFps))
+			time.Sleep(elapsedFpsTime)
+		}
 		glfw.PollEvents()
 	}
 

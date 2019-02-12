@@ -2,6 +2,7 @@ package tge
 
 import (
 	log "log"
+	"time"
 
 	physics "github.com/thommil/tge/physics"
 	player "github.com/thommil/tge/player"
@@ -15,8 +16,8 @@ type App interface {
 	OnStart(runtime Runtime) error
 	OnResize(width int, height int)
 	OnResume()
-	OnRender(renderer renderer.Renderer, ui ui.UI, player player.Player)
-	OnTick(physics physics.Physics)
+	OnRender(elaspedTime time.Duration)
+	OnTick(elaspedTime time.Duration)
 	OnPause()
 	OnStop()
 	OnDispose() error
@@ -24,6 +25,10 @@ type App interface {
 
 // Runtime API
 type Runtime interface {
+	GetRenderer() renderer.Renderer
+	GetUI() ui.UI
+	GetPlayer() player.Player
+	GetPhysics() physics.Physics
 	Stop()
 }
 
