@@ -32,7 +32,7 @@ func init() {
 
 // Run is the main entry point
 func Run(app App) {
-	log.Println("Instanciate()")
+	log.Println("Run()")
 
 	settings := Settings{}
 	app.Create(&settings)
