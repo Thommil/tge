@@ -66,9 +66,10 @@ func doRun(app App, settings *Settings) error {
 
 	// Window callbacks
 	var resizeAtStart sync.Once
+	var paused = true
 	window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
 		// Windows minify issue
-		if width > 0 {
+		if !paused && width > 0 {
 			app.OnResize(width, height)
 		}
 	})
@@ -79,15 +80,17 @@ func doRun(app App, settings *Settings) error {
 	})
 
 	window.SetFocusCallback(func(w *glfw.Window, focused bool) {
-		if focused {
+		if focused && paused {
 			app.OnResume()
+			paused = false
 			resizeAtStart.Do(func() {
 				if runtime.GOOS != "windows" {
 					app.OnResize(settings.Width, settings.Height)
 				}
 			})
-		} else {
+		} else if !paused {
 			app.OnPause()
+			paused = true
 		}
 	})
 
