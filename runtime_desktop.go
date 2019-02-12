@@ -81,16 +81,16 @@ func doRun(app App, settings *Settings) error {
 
 	window.SetFocusCallback(func(w *glfw.Window, focused bool) {
 		if focused && paused {
-			app.OnResume()
 			paused = false
+			app.OnResume()
 			resizeAtStart.Do(func() {
 				if runtime.GOOS != "windows" {
 					app.OnResize(settings.Width, settings.Height)
 				}
 			})
 		} else if !paused {
-			app.OnPause()
 			paused = true
+			app.OnPause()
 		}
 	})
 
@@ -104,6 +104,7 @@ func doRun(app App, settings *Settings) error {
 
 	// OS Specific
 	if runtime.GOOS == "windows" {
+		paused = false
 		app.OnResume()
 		app.OnResize(settings.Width, settings.Height)
 	}
