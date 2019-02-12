@@ -23,7 +23,19 @@ func doRun(app App, settings *Settings) error {
 	}
 	defer glfw.Terminate()
 
-	window, err := glfw.CreateWindow(settings.Width, settings.Height, settings.Name, nil, nil)
+	var monitor *glfw.Monitor
+	if settings.Fullscreen {
+		monitor = glfw.GetPrimaryMonitor()
+		videoMode := monitor.GetVideoMode()
+		settings.Width = videoMode.Width
+		settings.Height = videoMode.Height
+		glfw.WindowHint(glfw.RedBits, videoMode.RedBits)
+		glfw.WindowHint(glfw.GreenBits, videoMode.GreenBits)
+		glfw.WindowHint(glfw.BlueBits, videoMode.BlueBits)
+		glfw.WindowHint(glfw.RefreshRate, videoMode.RefreshRate)
+	}
+
+	window, err := glfw.CreateWindow(settings.Width, settings.Height, settings.Name, monitor, nil)
 	if err != nil {
 		return err
 	}
@@ -47,7 +59,7 @@ func doRun(app App, settings *Settings) error {
 
 	window.MakeContextCurrent()
 	app.Start()
-	window.Show()
+	window.Focus()
 
 	for !window.ShouldClose() {
 		//app.Render()
