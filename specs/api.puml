@@ -18,33 +18,36 @@ class tge << (P,#FF7700) Package >> {
 }
 
 interface Runtime {
-    GetRenderer() Renderer
-    GetUI() UI
-    GetPlayer() Player
-    GetPhysics() Physics
     Stop()
 }
 
-interface Renderer {
+interface Plugin{
 }
 
-interface UI {
+class renderer << (P,#FF7700) Package >> {
 }
-
-interface Player {
+class ui << (P,#FF7700) Package >> {
 }
-
-interface Physics {
+class player << (P,#FF7700) Package >> {
+}
+class physics << (P,#FF7700) Package >> {
+}
+class ai << (P,#FF7700) Package >> {
 }
 
 ' Relations
 App --> tge : call
 tge --> Runtime : instanciate
-App <-- Runtime : use
+App <-- Runtime : manage
+App --> Runtime : use
+App --> Plugin : use
 
-Runtime *-- Renderer
-Runtime *-- UI
-Runtime *-- Player
-Runtime *-- Physics
+Plugin <|-- renderer
+Plugin <|-- player
+Plugin <|-- ui
+Plugin <|-- physics
+Plugin <|-- ai
+
+
 @enduml
 ```

@@ -3,11 +3,6 @@ package tge
 import (
 	log "log"
 	"time"
-
-	physics "github.com/thommil/tge/physics"
-	player "github.com/thommil/tge/player"
-	renderer "github.com/thommil/tge/renderer"
-	ui "github.com/thommil/tge/ui"
 )
 
 // App defines API to implement for TGE applications
@@ -25,10 +20,6 @@ type App interface {
 
 // Runtime API
 type Runtime interface {
-	GetRenderer() renderer.Renderer
-	GetUI() ui.UI
-	GetPlayer() player.Player
-	GetPhysics() physics.Physics
 	Stop()
 }
 

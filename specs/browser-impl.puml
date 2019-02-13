@@ -13,5 +13,6 @@ class physics << (P,#FF7700) Package >>
 physics <|-- "github.com/jakecoffman.cp"
 
 class player << (P,#FF7700) Package >>
+class ai << (P,#FF7700) Package >>
 @enduml
 ```

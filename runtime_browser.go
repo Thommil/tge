@@ -5,41 +5,15 @@ package tge
 import (
 	log "log"
 	"time"
-
-	physics "github.com/thommil/tge/physics"
-	player "github.com/thommil/tge/player"
-	renderer "github.com/thommil/tge/renderer"
-	ui "github.com/thommil/tge/ui"
 )
 
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
 type browserRuntime struct {
-	app App
-
-	renderer renderer.Renderer
-	ui       ui.UI
-	player   player.Player
-	physics  physics.Physics
+	app      App
 	ticker   *time.Ticker
 	isPaused bool
-}
-
-func (runtime browserRuntime) GetRenderer() renderer.Renderer {
-	return runtime.renderer
-}
-
-func (runtime browserRuntime) GetUI() ui.UI {
-	return runtime.ui
-}
-
-func (runtime browserRuntime) GetPlayer() player.Player {
-	return runtime.player
-}
-
-func (runtime browserRuntime) GetPhysics() physics.Physics {
-	return runtime.physics
 }
 
 func (runtime browserRuntime) Stop() {
@@ -64,7 +38,7 @@ func doRun(app App, settings *Settings) error {
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
 	// -------------------------------------------------------------------- //
-	tpsDelay := time.Duration(1000000000 / settings.Physics.TPS)
+	tpsDelay := time.Duration(1000000000 / settings.TPS)
 	browserRuntime.ticker = time.NewTicker(tpsDelay)
 	defer browserRuntime.ticker.Stop()
 	go func() {
