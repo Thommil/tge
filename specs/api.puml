@@ -2,7 +2,7 @@
 @startuml API
 ' Components
 interface App {
-    OnCreate(*Settings) error
+    OnCreate(Settings) error
     OnStart(Runtime) error
     OnResize(int, int)
     OnResume()
@@ -14,7 +14,7 @@ interface App {
 }
 
 class tge << (P,#FF7700) Package >> {
-    {static} Run(App, *Settings) error
+    {static} Run(App, Settings) error
 }
 
 interface Runtime {

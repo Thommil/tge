@@ -1,19 +1,25 @@
 #!/bin/sh
 
-# Env
-if [ $# -lt 2 ] ; then
-    echo "Synopsis : build.sh PROJECT_PATH TARGET [TGE_BRANCH]"
-    echo "  Available targets  : desktop android ios browser"
-    exit 1
+# Env/Opts
+usage() { echo "Usage: build.sh [-t <desktop|browser|android|ios>] PROJECT_PATH" 1>&2; exit 1; }
+
+while getopts "t:" o; do
+    case "${o}" in
+        t)
+            TARGET=${OPTARG}
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if [ -z "$TARGET" ]; then
+    usage
 fi
 
-if [ -z "$GOPATH" ] ; then
-    echo "ERROR : GOPATH is not set"
-    exit 1
-fi 
-
-PROJECT_PATH="$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
-TARGET="$2"
+PROJECT_PATH="$(cd "$(dirname "$@")"; pwd)/$(basename "$@")"
 
 if [ ! -d "$PROJECT_PATH" ] ; then
     echo "ERROR : Project path not found : $PROJECT_PATH"
@@ -37,7 +43,6 @@ DIST_PATH="$PROJECT_PATH/dist/$TARGET"
 
 # Build desktop
 BuildDesktop () {
-    echo "Building $PROJECT_PATH for desktop ..."  
     rm -rf "$DIST_PATH"
     mkdir -p "$DIST_PATH"
     cd $PROJECT_PATH >/dev/null
@@ -55,21 +60,18 @@ BuildDesktop () {
 
 # Build Android
 BuildAndroid () {
-    # echo "Building $PROJECT_PATH for android ..."
     echo "ERROR : No implemented yet"
     exit 3
 }
 
 # Build IOS
 BuildIOS () {
-    # echo "Building $PROJECT_PATH for ios ..."
     echo "ERROR : No implemented yet"
     exit 3
 }
 
 # Build browser
 BuildBrowser () {
-    echo "Building $PROJECT_PATH for browser ..."
     rm -rf "$DIST_PATH"
     mkdir -p "$DIST_PATH"
     cd $PROJECT_PATH >/dev/null
@@ -87,13 +89,13 @@ BuildBrowser () {
     
 
 # Build
-if [ $TARGET == "desktop" ] ; then
+if [ "$TARGET" == "desktop" ] ; then
     BuildDesktop
-elif [ $TARGET == "android" ] ; then
+elif [ "$TARGET" == "android" ] ; then
     BuildAndroid
-elif [ $TARGET == "ios" ] ; then
+elif [ "$TARGET" == "ios" ] ; then
     BuildIOS
-elif [ $TARGET == "browser" ] ; then
+elif [ "$TARGET" == "browser" ] ; then
     BuildBrowser
 else
     echo "ERROR : Unsupported target : $TARGET"
