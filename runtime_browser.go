@@ -4,6 +4,7 @@ package tge
 
 import (
 	log "log"
+	sync "sync"
 	"time"
 )
 
@@ -41,13 +42,21 @@ func doRun(app App, settings *Settings) error {
 	tpsDelay := time.Duration(1000000000 / settings.TPS)
 	browserRuntime.ticker = time.NewTicker(tpsDelay)
 	defer browserRuntime.ticker.Stop()
+
+	mutex := &sync.Mutex{}
+	elapsedTpsTime := time.Duration(0)
 	go func() {
 		for range browserRuntime.ticker.C {
-			if !browserRuntime.isPaused {
-				app.OnTick(tpsDelay)
-			}
+			//if !browserRuntime.isPaused {
+			startTps := time.Now()
+			app.OnTick(elapsedTpsTime, mutex)
+			elapsedTpsTime = (tpsDelay - time.Since(startTps))
+			time.Sleep(elapsedTpsTime)
+			//}
 		}
 	}()
+
+	time.Sleep(10 * time.Second)
 
 	return nil
 }

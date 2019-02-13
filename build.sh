@@ -83,12 +83,6 @@ BuildBrowser () {
         rm -rf "$DIST_PATH"
     fi
     cd - > /dev/null
-    # cd $PROJECTS_PATH/$PROJECT
-    # GOARCH=js GOOS=browser go build
-    # cd -
-    # cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" .
-    # echo "ERROR : No implemented yet"
-    # exit 3
 }
     
 

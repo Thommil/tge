@@ -2,7 +2,8 @@ package tge
 
 import (
 	log "log"
-	"time"
+	sync "sync"
+	time "time"
 )
 
 // App defines API to implement for TGE applications
@@ -11,8 +12,8 @@ type App interface {
 	OnStart(runtime Runtime) error
 	OnResize(width int, height int)
 	OnResume()
-	OnRender(elaspedTime time.Duration)
-	OnTick(elaspedTime time.Duration)
+	OnRender(elaspedTime time.Duration, locker sync.Locker)
+	OnTick(elaspedTime time.Duration, locker sync.Locker)
 	OnPause()
 	OnStop()
 	OnDispose() error
