@@ -29,8 +29,8 @@ type Settings struct {
 
 // Default settings
 var defaultSettings = Settings{
-	Name:       "Untilted",
-	Fullscreen: true,
+	Name:       "TGE Application",
+	Fullscreen: false,
 	Width:      640,
 	Height:     480,
 	Physics: physics.Settings{
