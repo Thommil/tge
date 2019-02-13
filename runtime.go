@@ -2,6 +2,7 @@ package tge
 
 import (
 	log "log"
+	"time"
 
 	physics "github.com/thommil/tge/physics"
 	player "github.com/thommil/tge/player"
@@ -11,19 +12,24 @@ import (
 
 // App defines API to implement for TGE applications
 type App interface {
-	Create(settings *Settings) error
-	Start() error
-	Resize(width int, height int)
-	Resume()
-	Render(renderer renderer.Renderer, ui ui.UI, player player.Player)
-	Tick(physics physics.Physics)
-	Pause()
-	Stop()
-	Dispose() error
+	OnCreate(settings *Settings) error
+	OnStart(runtime Runtime) error
+	OnResize(width int, height int)
+	OnResume()
+	OnRender(elaspedTime time.Duration)
+	OnTick(elaspedTime time.Duration)
+	OnPause()
+	OnStop()
+	OnDispose() error
 }
 
 // Runtime API
 type Runtime interface {
+	GetRenderer() renderer.Renderer
+	GetUI() ui.UI
+	GetPlayer() player.Player
+	GetPhysics() physics.Physics
+	Stop()
 }
 
 func init() {
@@ -34,12 +40,12 @@ func init() {
 func Run(app App) {
 	log.Println("Run()")
 
-	settings := Settings{}
-	app.Create(&settings)
+	settings := &defaultSettings
+	app.OnCreate(settings)
 
-	err := doRun(app, &settings)
+	err := doRun(app, settings)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer app.Dispose()
+	defer app.OnDispose()
 }

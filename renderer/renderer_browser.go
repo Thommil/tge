@@ -1,3 +1,3 @@
-// +build browser
+// +build js
 
 package renderer
