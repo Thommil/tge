@@ -31,6 +31,7 @@
         init() {
             canvasEl.classList.remove('stop');
             canvasEl.classList.add('start');
+            canvasEl.focus()
             return canvasEl;
         },
 

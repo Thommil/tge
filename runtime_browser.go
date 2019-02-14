@@ -13,22 +13,29 @@ import (
 // Runtime implementation
 // -------------------------------------------------------------------- //
 type browserRuntime struct {
-	app            App
-	ticker         *time.Ticker
-	canvas         js.Value
-	isPaused       bool
-	isStopped      bool
-	isPausedChan   chan bool
-	isStoppedChan  chan bool
-	isDisposedChan chan bool
+	app          App
+	ticker       *time.Ticker
+	canvas       js.Value
+	isPaused     bool
+	isPausedChan chan bool
+	tickTicker   *time.Ticker
+	tickEnd      chan bool
+	renderTicker *time.Ticker
+	renderEnd    chan bool
 }
 
 func (runtime browserRuntime) Stop() {
+	runtime.isPaused = true
 	go func() {
-		runtime.ticker.Stop()
 		runtime.isPausedChan <- true
-		runtime.isStoppedChan <- true
+		runtime.app.OnPause()
+		go func() {
+
+			runtime.tickEnd <- true
+			runtime.renderEnd <- true
+		}()
 	}()
+
 }
 
 func doRun(app App, settings *Settings) error {
@@ -45,13 +52,12 @@ func doRun(app App, settings *Settings) error {
 
 	// Instanciate Runtime
 	browserRuntime := browserRuntime{
-		app:            app,
-		isPaused:       true,
-		isStopped:      false,
-		canvas:         canvas,
-		isPausedChan:   make(chan bool),
-		isStoppedChan:  make(chan bool),
-		isDisposedChan: make(chan bool),
+		app:          app,
+		isPaused:     true,
+		canvas:       canvas,
+		isPausedChan: make(chan bool),
+		tickEnd:      make(chan bool),
+		renderEnd:    make(chan bool),
 	}
 
 	// Start App
@@ -65,18 +71,24 @@ func doRun(app App, settings *Settings) error {
 	// Ticker Loop
 	// -------------------------------------------------------------------- //
 	tpsDelay := time.Duration(1000000000 / settings.TPS)
-	browserRuntime.ticker = time.NewTicker(tpsDelay)
-	defer browserRuntime.ticker.Stop()
+	browserRuntime.tickTicker = time.NewTicker(tpsDelay)
+	defer browserRuntime.tickTicker.Stop()
 
 	mutex := &sync.Mutex{}
 	elapsedTpsTime := time.Duration(0)
 	go func() {
-		for range browserRuntime.ticker.C {
-			if !browserRuntime.isPaused {
-				startTps := time.Now()
-				app.OnTick(elapsedTpsTime, mutex)
-				elapsedTpsTime = (tpsDelay - time.Since(startTps))
-				time.Sleep(elapsedTpsTime)
+		for {
+			select {
+			case <-browserRuntime.tickEnd:
+				return
+			case now := <-browserRuntime.tickTicker.C:
+				if !browserRuntime.isPaused {
+					app.OnTick(elapsedTpsTime, mutex)
+					elapsedTpsTime = tpsDelay - time.Since(now)
+					if elapsedTpsTime < 0 {
+						elapsedTpsTime = 0
+					}
+				}
 			}
 		}
 	}()
@@ -85,81 +97,74 @@ func doRun(app App, settings *Settings) error {
 	// Callbacks
 	// -------------------------------------------------------------------- //
 
-	// window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
-	// 	// OS Specific - Windows call resize to 0
-	// 	if !desktopRuntime.isPaused && width > 0 {
-	// 		app.OnResize(width, height)
-	// 	}
-	// })
+	// Resize
+	js.Global().Call("addEventListener", "resize", js.NewCallback(func(args []js.Value) {
+		app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
+			browserRuntime.canvas.Get("clientHeight").Int())
+	}))
 
-	// window.SetFocusCallback(func(w *glfw.Window, focused bool) {
-	// 	if focused && desktopRuntime.isPaused {
-	// 		desktopRuntime.isPaused = false
-	// 		app.OnResume()
-	// 		// OS Specific - MacOS do not resize at start
-	// 		resizeAtStart.Do(func() {
-	// 			if runtime.GOOS != "windows" {
-	// 				app.OnResize(settings.Width, settings.Height)
-	// 			}
-	// 		})
-	// 	} else if !desktopRuntime.isPaused {
-	// 		desktopRuntime.isPaused = true
-	// 		app.OnPause()
-	// 	}
-	// })
+	// Focus
+	browserRuntime.canvas.Call("addEventListener", "blur", js.NewCallback(func(args []js.Value) {
+		if !browserRuntime.isPaused {
+			go func() {
+				browserRuntime.isPausedChan <- true
+				browserRuntime.app.OnPause()
+			}()
+		}
+	}))
 
-	// window.SetCloseCallback(func(w *glfw.Window) {
-	// 	desktopRuntime.ticker.Stop()
-	// 	if !desktopRuntime.isPaused {
-	// 		app.OnPause()
-	// 	}
-	// 	app.OnStop()
-	// })
+	browserRuntime.canvas.Call("addEventListener", "focus", js.NewCallback(func(args []js.Value) {
+		if browserRuntime.isPaused {
+			go func() {
+				browserRuntime.app.OnResume()
+				browserRuntime.isPausedChan <- false
+			}()
+		}
+	}))
+
+	// Destroy
+	js.Global().Call("addEventListener", "beforeunload", js.NewCallback(func(args []js.Value) {
+		app.OnStop()
+		app.OnDispose()
+	}))
 
 	// -------------------------------------------------------------------- //
 	// Render Loop
 	// -------------------------------------------------------------------- //
 	fpsDelay := time.Duration(1000000000 / settings.FPS)
-
-	var renderFrame js.Callback
-	defer renderFrame.Release()
+	now := time.Now()
 	elapsedFpsTime := time.Duration(0)
-	renderFrame = js.NewCallback(func(args []js.Value) {
-		// Get channels to check status
-		select {
-		case browserRuntime.isPaused = <-browserRuntime.isPausedChan:
-			if browserRuntime.isPaused {
-				browserRuntime.app.OnPause()
-			}
-		case browserRuntime.isStopped = <-browserRuntime.isStoppedChan:
-			if browserRuntime.isStopped {
-				browserRuntime.app.OnStop()
-				browserRuntime.isDisposedChan <- true
-			}
-		default:
-		}
+	browserRuntime.renderTicker = time.NewTicker(fpsDelay)
+	defer browserRuntime.renderTicker.Stop()
 
-		// Render
-		if !browserRuntime.isStopped {
-			if !browserRuntime.isPaused {
-				startFps := time.Now()
-				app.OnRender(elapsedFpsTime, mutex)
-				elapsedFpsTime = (fpsDelay - time.Since(startFps))
-				time.Sleep(elapsedFpsTime)
-				js.Global().Call("requestAnimationFrame", renderFrame)
-			} else {
-				time.Sleep(fpsDelay)
-				js.Global().Call("requestAnimationFrame", renderFrame)
-			}
+	renderFrame := js.NewCallback(func(args []js.Value) {
+		now = time.Now()
+		app.OnRender(elapsedFpsTime, mutex)
+		elapsedFpsTime = fpsDelay - time.Since(now)
+		if elapsedFpsTime < 0 {
+			elapsedFpsTime = 0
 		}
 	})
-	js.Global().Call("requestAnimationFrame", renderFrame)
 
-	// Block until dispose chan notified
-	<-browserRuntime.isDisposedChan
+	for {
+		select {
+		case <-browserRuntime.renderEnd:
+			browserRuntime.tickTicker.Stop()
+			browserRuntime.renderTicker.Stop()
+			renderFrame.Release()
+			app.OnStop()
+			jsTge.Call("stop")
+			app.OnDispose()
+			<-make(chan int)
+		case <-browserRuntime.renderTicker.C:
+			select {
+			case browserRuntime.isPaused = <-browserRuntime.isPausedChan:
+			default:
+			}
+			if !browserRuntime.isPaused {
+				js.Global().Call("requestAnimationFrame", renderFrame)
+			}
+		}
+	}
 
-	// Call JS stop handler
-	jsTge.Call("stop")
-
-	return nil
 }

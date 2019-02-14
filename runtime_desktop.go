@@ -25,11 +25,11 @@ func init() {
 type desktopRuntime struct {
 	app          App
 	window       *glfw.Window
+	isPaused     bool
 	tickTicker   *time.Ticker
 	tickEnd      chan bool
 	renderTicker *time.Ticker
 	renderEnd    chan bool
-	isPaused     bool
 }
 
 func (runtime desktopRuntime) Stop() {
@@ -128,6 +128,7 @@ func doRun(app App, settings *Settings) error {
 	// -------------------------------------------------------------------- //
 	var resizeAtStart sync.Once
 
+	// Resize
 	window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
 		// OS Specific - Windows call resize to 0
 		if !desktopRuntime.isPaused && width > 0 {
@@ -135,6 +136,7 @@ func doRun(app App, settings *Settings) error {
 		}
 	})
 
+	// Focus
 	window.SetFocusCallback(func(w *glfw.Window, focused bool) {
 		if focused && desktopRuntime.isPaused {
 			desktopRuntime.isPaused = false
@@ -151,6 +153,7 @@ func doRun(app App, settings *Settings) error {
 		}
 	})
 
+	// Destroy
 	window.SetCloseCallback(func(w *glfw.Window) {
 		desktopRuntime.Stop()
 	})
@@ -180,20 +183,4 @@ func doRun(app App, settings *Settings) error {
 		}
 		glfw.PollEvents()
 	}
-	// fpsDelay := time.Duration(1000000000 / settings.FPS)
-	// elapsedFpsTime := time.Duration(0)
-	// for !window.ShouldClose() {
-	// 	if !desktopRuntime.isPaused {
-	// 		startFps := time.Now()
-	// 		app.OnRender(elapsedFpsTime, mutex)
-	// 		window.SwapBuffers()
-	// 		elapsedFpsTime = (fpsDelay - time.Since(startFps))
-	// 		if elapsedTpsTime < 0 {
-	// 			elapsedTpsTime = 0
-	// 		}
-	// 		time.Sleep(elapsedFpsTime)
-	// 	}
-	// 	glfw.PollEvents()
-	// }
-
 }
