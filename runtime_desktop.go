@@ -30,6 +30,7 @@ type desktopRuntime struct {
 }
 
 func (runtime desktopRuntime) Stop() {
+	runtime.isPaused = true
 	runtime.ticker.Stop()
 	runtime.app.OnPause()
 	runtime.app.OnStop()
@@ -161,6 +162,10 @@ func doRun(app App, settings *Settings) error {
 		}
 		glfw.PollEvents()
 	}
+
+	// Be sure that Ticker has finished before releasing resources
+	mutex.Lock()
+	mutex.Unlock()
 
 	return nil
 }
