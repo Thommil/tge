@@ -163,9 +163,5 @@ func doRun(app App, settings *Settings) error {
 		glfw.PollEvents()
 	}
 
-	// Be sure that Ticker has finished before releasing resources
-	mutex.Lock()
-	mutex.Unlock()
-
 	return nil
 }

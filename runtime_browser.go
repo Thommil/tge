@@ -24,11 +24,11 @@ type browserRuntime struct {
 }
 
 func (runtime browserRuntime) Stop() {
-	runtime.ticker.Stop()
-	runtime.isPaused = true
-	runtime.isStopped = true
-	runtime.isPausedChan <- runtime.isPaused
-	runtime.isStoppedChan <- runtime.isStopped
+	go func() {
+		runtime.ticker.Stop()
+		runtime.isPausedChan <- true
+		runtime.isStoppedChan <- true
+	}()
 }
 
 func doRun(app App, settings *Settings) error {
@@ -128,10 +128,14 @@ func doRun(app App, settings *Settings) error {
 		// Get channels to check status
 		select {
 		case browserRuntime.isPaused = <-browserRuntime.isPausedChan:
-			browserRuntime.app.OnPause()
+			if browserRuntime.isPaused {
+				browserRuntime.app.OnPause()
+			}
 		case browserRuntime.isStopped = <-browserRuntime.isStoppedChan:
-			browserRuntime.app.OnStop()
-			browserRuntime.isDisposedChan <- true
+			if browserRuntime.isStopped {
+				browserRuntime.app.OnStop()
+				browserRuntime.isDisposedChan <- true
+			}
 		default:
 		}
 
@@ -156,10 +160,6 @@ func doRun(app App, settings *Settings) error {
 
 	// Call JS stop handler
 	jsTge.Call("stop")
-
-	// Be sure that Ticker has finished before releasing resources
-	mutex.Lock()
-	mutex.Unlock()
 
 	return nil
 }
