@@ -2,12 +2,8 @@ package tge
 
 import (
 	log "log"
-	"time"
-
-	physics "github.com/thommil/tge/physics"
-	player "github.com/thommil/tge/player"
-	renderer "github.com/thommil/tge/renderer"
-	ui "github.com/thommil/tge/ui"
+	sync "sync"
+	time "time"
 )
 
 // App defines API to implement for TGE applications
@@ -16,8 +12,8 @@ type App interface {
 	OnStart(runtime Runtime) error
 	OnResize(width int, height int)
 	OnResume()
-	OnRender(elaspedTime time.Duration)
-	OnTick(elaspedTime time.Duration)
+	OnRender(elaspedTime time.Duration, locker sync.Locker)
+	OnTick(elaspedTime time.Duration, locker sync.Locker)
 	OnPause()
 	OnStop()
 	OnDispose() error
@@ -25,10 +21,6 @@ type App interface {
 
 // Runtime API
 type Runtime interface {
-	GetRenderer() renderer.Renderer
-	GetUI() ui.UI
-	GetPlayer() player.Player
-	GetPhysics() physics.Physics
 	Stop()
 }
 

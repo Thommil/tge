@@ -1,0 +1,18 @@
+<html>
+	<head>
+        <title></title>
+        <meta charset="utf-8">		
+        <link rel="stylesheet" href="tge.css" type="text/css">
+	</head>
+	<body>
+        <canvas id="canvas"></canvas>
+        <script src="wasm_exec.js"></script>
+        <script src="tge.js"></script>
+		<script>
+			const go = new Go();
+			WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+				go.run(result.instance);
+			});
+		</script>
+    </body>
+</html>

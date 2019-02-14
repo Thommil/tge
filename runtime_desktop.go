@@ -9,13 +9,9 @@ import (
 	log "log"
 	runtime "runtime"
 	sync "sync"
-	"time"
+	time "time"
 
 	glfw "github.com/go-gl/glfw/v3.2/glfw"
-	physics "github.com/thommil/tge/physics"
-	player "github.com/thommil/tge/player"
-	renderer "github.com/thommil/tge/renderer"
-	ui "github.com/thommil/tge/ui"
 )
 
 // init ensure that we're running on main thread
@@ -29,31 +25,12 @@ func init() {
 type desktopRuntime struct {
 	app      App
 	window   *glfw.Window
-	renderer renderer.Renderer
-	ui       ui.UI
-	player   player.Player
-	physics  physics.Physics
 	ticker   *time.Ticker
 	isPaused bool
 }
 
-func (runtime desktopRuntime) GetRenderer() renderer.Renderer {
-	return runtime.renderer
-}
-
-func (runtime desktopRuntime) GetUI() ui.UI {
-	return runtime.ui
-}
-
-func (runtime desktopRuntime) GetPlayer() player.Player {
-	return runtime.player
-}
-
-func (runtime desktopRuntime) GetPhysics() physics.Physics {
-	return runtime.physics
-}
-
 func (runtime desktopRuntime) Stop() {
+	runtime.isPaused = true
 	runtime.ticker.Stop()
 	runtime.app.OnPause()
 	runtime.app.OnStop()
@@ -117,13 +94,19 @@ func doRun(app App, settings *Settings) error {
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
 	// -------------------------------------------------------------------- //
-	tpsDelay := time.Duration(1000000000 / settings.Physics.TPS)
+	tpsDelay := time.Duration(1000000000 / settings.TPS)
 	desktopRuntime.ticker = time.NewTicker(tpsDelay)
 	defer desktopRuntime.ticker.Stop()
+
+	mutex := &sync.Mutex{}
+	elapsedTpsTime := time.Duration(0)
 	go func() {
 		for range desktopRuntime.ticker.C {
 			if !desktopRuntime.isPaused {
-				app.OnTick(tpsDelay)
+				startTps := time.Now()
+				app.OnTick(elapsedTpsTime, mutex)
+				elapsedTpsTime = (tpsDelay - time.Since(startTps))
+				time.Sleep(elapsedTpsTime)
 			}
 		}
 	}()
@@ -167,12 +150,12 @@ func doRun(app App, settings *Settings) error {
 	// -------------------------------------------------------------------- //
 	// Render Loop
 	// -------------------------------------------------------------------- //
-	fpsDelay := time.Duration(1000000000 / settings.Renderer.FPS)
-	var elapsedFpsTime time.Duration
+	fpsDelay := time.Duration(1000000000 / settings.FPS)
+	elapsedFpsTime := time.Duration(0)
 	for !window.ShouldClose() {
 		if !desktopRuntime.isPaused {
 			startFps := time.Now()
-			app.OnRender(elapsedFpsTime)
+			app.OnRender(elapsedFpsTime, mutex)
 			window.SwapBuffers()
 			elapsedFpsTime = (fpsDelay - time.Since(startFps))
 			time.Sleep(elapsedFpsTime)

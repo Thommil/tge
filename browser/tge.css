@@ -1,0 +1,55 @@
+html {
+    height: 100%;
+}
+
+body {
+    background-color: #000;
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+#canvas {                
+    background-color: #FFF;
+    opacity: 0;
+}
+
+.fullscreen {
+    width: 100% !important;
+    height : 100% !important;
+}
+
+.start {
+    -webkit-animation: start-anim 0.5s;
+    animation: start-anim 0.5s;
+    opacity: 1 !important;
+}
+
+@keyframes start-anim {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@-webkit-keyframes start-anim {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.stop {
+    -webkit-animation: stop-anim 0.5s;
+    animation: stop-anim 0.5s;
+    opacity: 0 !important;
+}
+
+@keyframes stop-anim {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
+
+@-webkit-keyframes stop-anim {
+    from { opacity: 1; }
+    to   { opacity: 0; }
+}
