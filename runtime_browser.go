@@ -112,13 +112,15 @@ func Run(app App) error {
 
 	// Resize
 	js.Global().Call("addEventListener", "resize", js.NewCallback(func(args []js.Value) {
-		app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
-			browserRuntime.canvas.Get("clientHeight").Int())
+		if !browserRuntime.isStopped {
+			app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
+				browserRuntime.canvas.Get("clientHeight").Int())
+		}
 	}))
 
 	// Focus
 	browserRuntime.canvas.Call("addEventListener", "blur", js.NewCallback(func(args []js.Value) {
-		if !browserRuntime.isPaused {
+		if !browserRuntime.isStopped && !browserRuntime.isPaused {
 			go func() {
 				browserRuntime.isPausedChan <- true
 				browserRuntime.app.OnPause()
@@ -127,7 +129,7 @@ func Run(app App) error {
 	}))
 
 	browserRuntime.canvas.Call("addEventListener", "focus", js.NewCallback(func(args []js.Value) {
-		if browserRuntime.isPaused {
+		if !browserRuntime.isStopped && browserRuntime.isPaused {
 			go func() {
 				browserRuntime.app.OnResume()
 				browserRuntime.isPausedChan <- false

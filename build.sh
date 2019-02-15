@@ -47,21 +47,27 @@ BuildDesktop () {
     rm -rf "$DIST_PATH"
     mkdir -p "$DIST_PATH"
     cd $PROJECT_PATH >/dev/null
+
     echo " > building"
     go build -o "$DIST_PATH/$(basename $PROJECT_PATH)"    
+
     if [ "$?" -eq "0" ]; then
         if [ $OS == "windows" ]; then
             mv "$DIST_PATH/$(basename $PROJECT_PATH)" "$DIST_PATH/$(basename $PROJECT_PATH).exe"
         fi
+
+        echo " > copying resources"
         if [ ! -d "$PROJECT_PATH/desktop" ]; then
-            cp -rp "$BUILDER_PATH/desktop" "$PROJECT_PATH/desktop"
+            cp -rp "$BUILDER_PATH/desktop" "$PROJECT_PATH"
         fi
-        cp -r $PROJECT_PATH/desktop/* $DIST_PATH
+        cp -rp "$PROJECT_PATH/desktop" $(dirname $DIST_PATH)
+        
         echo " > Build done in $DIST_PATH"  
     else
         echo " > Build failed" 1>&2
         rm -rf "$DIST_PATH"
     fi
+
     cd - > /dev/null
 }
 
@@ -75,22 +81,31 @@ BuildAndroid () {
     fi
     command -v gomobile >/dev/null 2>&1 || { echo "ERROR : gomobile command not found in PATH" 1>&2; exit 1; }
     #gomobile init -ndk $ANDROID_NDK
+    
     echo " > cleaning"
     rm -rf "$DIST_PATH"
     mkdir -p "$DIST_PATH"
+    
+    echo " > copying resources"
+    if [ ! -d "$PROJECT_PATH/android" ]; then
+        cp -rp "$BUILDER_PATH/android" "$PROJECT_PATH/android"        
+    fi
+    cp -r "$PROJECT_PATH/android/AndroidManifest.xml" $PROJECT_PATH
+
+    echo " > Building"
     cd $PROJECT_PATH >/dev/null
-    gomobile build -target=android -o "$DIST_PATH/$(basename $PROJECT_PATH).apk"
-    if [ "$?" -eq "0" ]; then
-        if [ ! -d "$PROJECT_PATH/android" ]; then
-            cp -rp "$BUILDER_PATH/android" "$PROJECT_PATH/android"
-        fi
-        cp -r $PROJECT_PATH/android/* $DIST_PATH
+    gomobile build -target=android -o "$DIST_PATH/$(basename $PROJECT_PATH).apk"    
+    
+    if [ "$?" -eq "0" ]; then                
         echo " > Build done in $DIST_PATH"  
+        #rm -f "$PROJECT_PATH/AndroidManifest.xml"
     else
         echo " > Build failed" 1>&2
-        #rm -rf "$DIST_PATH"
+        rm -rf "$DIST_PATH"
+        #rm -f "$PROJECT_PATH/AndroidManifest.xml"
     fi
-    exit 3
+
+    cd - > /dev/null
 }
 
 # Build IOS
@@ -107,21 +122,25 @@ BuildBrowser () {
     echo " > cleaning"
     rm -rf "$DIST_PATH"
     mkdir -p "$DIST_PATH"
-    cd $PROJECT_PATH >/dev/null
+
     echo " > building"
+    cd $PROJECT_PATH >/dev/null
     GOOS=js GOARCH=wasm go build -o "$DIST_PATH/main.wasm"    
+    
     if [ "$?" -eq "0" ]; then
         echo " > copying resources"
         if [ ! -d "$PROJECT_PATH/browser" ]; then
-            cp -rp "$BUILDER_PATH/browser" "$PROJECT_PATH/browser"
+            cp -rp "$BUILDER_PATH/browser" "$PROJECT_PATH"
         fi
-        cp -r $PROJECT_PATH/browser/* $DIST_PATH
+        cp -rp "$PROJECT_PATH/browser" $(dirname $DIST_PATH)
         cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" $DIST_PATH
+
         echo " > Build done in $DIST_PATH"
     else
         echo " > Build failed" 1>&2
         rm -rf "$DIST_PATH"
     fi
+
     cd - > /dev/null
 }
     
