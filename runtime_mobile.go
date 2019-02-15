@@ -125,8 +125,6 @@ func Run(app App) error {
 							elapsedFpsTime = 0
 						}
 						time.Sleep(elapsedFpsTime)
-					} else {
-						time.Sleep(fpsDelay)
 					}
 					a.Send(paint.Event{})
 				}
