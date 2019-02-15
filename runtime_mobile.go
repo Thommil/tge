@@ -12,21 +12,32 @@ import (
 	paint "golang.org/x/mobile/event/paint"
 	size "golang.org/x/mobile/event/size"
 	touch "golang.org/x/mobile/event/touch"
+	gl "golang.org/x/mobile/gl"
 )
+
+type MobileRuntime interface {
+	Runtime
+	GetGlContext() gl.Context
+}
 
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
 type mobileRuntime struct {
-	app      App
-	mobile   mobile.App
-	isPaused bool
-	ticker   *time.Ticker
-	tickEnd  chan bool
+	app       App
+	mobile    mobile.App
+	isPaused  bool
+	ticker    *time.Ticker
+	tickEnd   chan bool
+	glContext gl.Context
 }
 
 func (runtime mobileRuntime) Stop() {
 	// Not implemented
+}
+
+func (runtime mobileRuntime) GetGlContext() gl.Context {
+	return runtime.glContext
 }
 
 // Run main entry point of runtime
@@ -88,6 +99,7 @@ func Run(app App) error {
 			case lifecycle.Event:
 				switch e.To {
 				case lifecycle.StageFocused:
+					mobileRuntime.glContext, _ = e.DrawContext.(gl.Context)
 					app.OnStart(mobileRuntime)
 					startTicker()
 					app.OnResume()
@@ -99,18 +111,23 @@ func Run(app App) error {
 					mobileRuntime.tickEnd <- true
 					app.OnPause()
 					app.OnStop()
+					mobileRuntime.glContext = nil
 				}
 
 			case paint.Event:
 				if !mobileRuntime.isPaused {
-					now := time.Now()
-					app.OnRender(elapsedFpsTime, mutex)
-					a.Publish()
-					elapsedFpsTime = fpsDelay - time.Since(now)
-					if elapsedFpsTime < 0 {
-						elapsedFpsTime = 0
+					if mobileRuntime.glContext != nil && !e.External {
+						now := time.Now()
+						app.OnRender(elapsedFpsTime, mutex)
+						a.Publish()
+						elapsedFpsTime = fpsDelay - time.Since(now)
+						if elapsedFpsTime < 0 {
+							elapsedFpsTime = 0
+						}
+						time.Sleep(elapsedFpsTime)
+					} else {
+						time.Sleep(fpsDelay)
 					}
-					time.Sleep(elapsedFpsTime)
 					a.Send(paint.Event{})
 				}
 

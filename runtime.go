@@ -24,6 +24,11 @@ type Runtime interface {
 	Stop()
 }
 
+// Plugin API
+type Plugin interface {
+	Init(runtime Runtime)
+}
+
 func init() {
 	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
 }

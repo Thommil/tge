@@ -22,6 +22,7 @@ interface Runtime {
 }
 
 interface Plugin{
+    Init(Runtime) error
 }
 
 class renderer << (P,#FF7700) Package >> {

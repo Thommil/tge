@@ -1,5 +1,5 @@
 P0
- * ...
+ * use TinyGo for wasm
 
 P1
  * Android Mainfest template & icons

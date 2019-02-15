@@ -94,15 +94,15 @@ BuildAndroid () {
 
     echo " > Building"
     cd $PROJECT_PATH >/dev/null
-    gomobile build -target=android -o "$DIST_PATH/$(basename $PROJECT_PATH).apk"    
+    gomobile build -tags i386 -target=android -o "$DIST_PATH/$(basename $PROJECT_PATH).apk"    
     
     if [ "$?" -eq "0" ]; then                
         echo " > Build done in $DIST_PATH"  
-        #rm -f "$PROJECT_PATH/AndroidManifest.xml"
+        rm -f "$PROJECT_PATH/AndroidManifest.xml"
     else
         echo " > Build failed" 1>&2
         rm -rf "$DIST_PATH"
-        #rm -f "$PROJECT_PATH/AndroidManifest.xml"
+        rm -f "$PROJECT_PATH/AndroidManifest.xml"
     fi
 
     cd - > /dev/null
