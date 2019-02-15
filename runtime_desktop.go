@@ -87,7 +87,7 @@ func Run(app App) error {
 	window.MakeContextCurrent()
 
 	// Instanciate Runtime
-	desktopRuntime := desktopRuntime{
+	desktopRuntime := &desktopRuntime{
 		app:       app,
 		window:    window,
 		isPaused:  true,
@@ -96,7 +96,7 @@ func Run(app App) error {
 	}
 
 	// Start App
-	app.OnStart(&desktopRuntime)
+	app.OnStart(desktopRuntime)
 
 	// OS Specific - Windows do not focus at start
 	if runtime.GOOS == "windows" {
@@ -147,8 +147,8 @@ func Run(app App) error {
 	// Focus
 	window.SetFocusCallback(func(w *glfw.Window, focused bool) {
 		if focused && desktopRuntime.isPaused {
-			desktopRuntime.isPaused = false
 			app.OnResume()
+			desktopRuntime.isPaused = false
 			// OS Specific - MacOS do not resize at start
 			resizeAtStart.Do(func() {
 				if runtime.GOOS != "windows" {

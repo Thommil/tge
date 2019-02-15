@@ -63,7 +63,7 @@ func Run(app App) error {
 	canvas := jsTge.Call("init")
 
 	// Instanciate Runtime
-	browserRuntime := browserRuntime{
+	browserRuntime := &browserRuntime{
 		app:          app,
 		isPaused:     true,
 		isStopped:    false,
@@ -74,7 +74,7 @@ func Run(app App) error {
 	}
 
 	// Start App
-	app.OnStart(&browserRuntime)
+	app.OnStart(browserRuntime)
 	app.OnResume()
 	browserRuntime.isPaused = false
 	app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
