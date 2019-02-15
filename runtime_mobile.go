@@ -4,9 +4,127 @@ package tge
 
 import (
 	log "log"
+	sync "sync"
+	time "time"
+
+	mobile "golang.org/x/mobile/app"
+	lifecycle "golang.org/x/mobile/event/lifecycle"
+	paint "golang.org/x/mobile/event/paint"
+	size "golang.org/x/mobile/event/size"
+	touch "golang.org/x/mobile/event/touch"
 )
 
-func doRun(app App, settings *Settings) error {
-	log.Println("doRun()")
+// -------------------------------------------------------------------- //
+// Runtime implementation
+// -------------------------------------------------------------------- //
+type mobileRuntime struct {
+	app      App
+	mobile   mobile.App
+	isPaused bool
+	ticker   *time.Ticker
+	tickEnd  chan bool
+}
+
+func (runtime mobileRuntime) Stop() {
+	// Not implemented
+}
+
+// Run main entry point of runtime
+func Run(app App) error {
+	log.Println("Run()")
+
+	// -------------------------------------------------------------------- //
+	// Create
+	// -------------------------------------------------------------------- //
+	settings := &defaultSettings
+	err := app.OnCreate(settings)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// Instanciate Runtime
+	mobileRuntime := &mobileRuntime{
+		app:      app,
+		isPaused: true,
+		tickEnd:  make(chan bool),
+	}
+
+	// -------------------------------------------------------------------- //
+	// Ticker Loop
+	// -------------------------------------------------------------------- //
+	mutex := &sync.Mutex{}
+	startTicker := func() {
+		tpsDelay := time.Duration(1000000000 / settings.TPS)
+		mobileRuntime.ticker = time.NewTicker(tpsDelay)
+
+		elapsedTpsTime := time.Duration(0)
+		go func() {
+			for {
+				select {
+				case <-mobileRuntime.tickEnd:
+					return
+				case now := <-mobileRuntime.ticker.C:
+					if !mobileRuntime.isPaused {
+						app.OnTick(elapsedTpsTime, mutex)
+						elapsedTpsTime = tpsDelay - time.Since(now)
+						if elapsedTpsTime < 0 {
+							elapsedTpsTime = 0
+						}
+					}
+				}
+			}
+		}()
+	}
+
+	// -------------------------------------------------------------------- //
+	// Init
+	// -------------------------------------------------------------------- //
+	fpsDelay := time.Duration(1000000000 / settings.FPS)
+	elapsedFpsTime := time.Duration(0)
+	mobile.Main(func(a mobile.App) {
+		defer app.OnDispose()
+		for e := range a.Events() {
+			switch e := a.Filter(e).(type) {
+			case lifecycle.Event:
+				switch e.To {
+				case lifecycle.StageFocused:
+					app.OnStart(mobileRuntime)
+					startTicker()
+					app.OnResume()
+					mobileRuntime.isPaused = false
+
+				case lifecycle.StageAlive:
+					mobileRuntime.isPaused = true
+					mobileRuntime.ticker.Stop()
+					mobileRuntime.tickEnd <- true
+					app.OnPause()
+					app.OnStop()
+				}
+
+			case paint.Event:
+				if !mobileRuntime.isPaused {
+					now := time.Now()
+					app.OnRender(elapsedFpsTime, mutex)
+					a.Publish()
+					elapsedFpsTime = fpsDelay - time.Since(now)
+					if elapsedFpsTime < 0 {
+						elapsedFpsTime = 0
+					}
+					time.Sleep(elapsedFpsTime)
+					a.Send(paint.Event{})
+				}
+
+			case size.Event:
+				app.OnResize(e.WidthPx, e.HeightPx)
+
+			case touch.Event:
+				log.Println("OnTouch")
+
+			}
+
+		}
+	})
+	defer app.OnDispose()
+
 	return nil
 }

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="1"
+    android:versionName="1.0"
+    package="org.golang.todo.go_"
+    platformBuildVersionCode="15"
+    platformBuildVersionName="4.0.4-1406430">
+
+    <application
+        android:label="Untitled"
+        android:debuggable="true">
+
+        <activity
+            android:label="Untitled"
+            android:name="org.golang.app.GoNativeActivity"
+            android:configChanges="0xa0">
+
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="go_" />
+
+            <intent-filter>
+
+                <action
+                    android:name="android.intent.action.MAIN" />
+
+                <category
+                    android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

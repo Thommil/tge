@@ -17,6 +17,7 @@ type browserRuntime struct {
 	ticker       *time.Ticker
 	canvas       js.Value
 	isPaused     bool
+	isStopped    bool
 	isPausedChan chan bool
 	tickTicker   *time.Ticker
 	tickEnd      chan bool
@@ -38,8 +39,19 @@ func (runtime browserRuntime) Stop() {
 
 }
 
-func doRun(app App, settings *Settings) error {
-	log.Println("doRun()")
+// Run main entry point of runtime
+func Run(app App) error {
+	log.Println("Run()")
+
+	// -------------------------------------------------------------------- //
+	// Create
+	// -------------------------------------------------------------------- //
+	settings := &defaultSettings
+	err := app.OnCreate(settings)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer app.OnDispose() // Should be never called
 
 	// -------------------------------------------------------------------- //
 	// Init
@@ -51,9 +63,10 @@ func doRun(app App, settings *Settings) error {
 	canvas := jsTge.Call("init")
 
 	// Instanciate Runtime
-	browserRuntime := browserRuntime{
+	browserRuntime := &browserRuntime{
 		app:          app,
 		isPaused:     true,
+		isStopped:    false,
 		canvas:       canvas,
 		isPausedChan: make(chan bool),
 		tickEnd:      make(chan bool),
@@ -61,7 +74,7 @@ func doRun(app App, settings *Settings) error {
 	}
 
 	// Start App
-	app.OnStart(&browserRuntime)
+	app.OnStart(browserRuntime)
 	app.OnResume()
 	browserRuntime.isPaused = false
 	app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
@@ -99,13 +112,15 @@ func doRun(app App, settings *Settings) error {
 
 	// Resize
 	js.Global().Call("addEventListener", "resize", js.NewCallback(func(args []js.Value) {
-		app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
-			browserRuntime.canvas.Get("clientHeight").Int())
+		if !browserRuntime.isStopped {
+			app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
+				browserRuntime.canvas.Get("clientHeight").Int())
+		}
 	}))
 
 	// Focus
 	browserRuntime.canvas.Call("addEventListener", "blur", js.NewCallback(func(args []js.Value) {
-		if !browserRuntime.isPaused {
+		if !browserRuntime.isStopped && !browserRuntime.isPaused {
 			go func() {
 				browserRuntime.isPausedChan <- true
 				browserRuntime.app.OnPause()
@@ -114,7 +129,7 @@ func doRun(app App, settings *Settings) error {
 	}))
 
 	browserRuntime.canvas.Call("addEventListener", "focus", js.NewCallback(func(args []js.Value) {
-		if browserRuntime.isPaused {
+		if !browserRuntime.isStopped && browserRuntime.isPaused {
 			go func() {
 				browserRuntime.app.OnResume()
 				browserRuntime.isPausedChan <- false
@@ -124,8 +139,10 @@ func doRun(app App, settings *Settings) error {
 
 	// Destroy
 	js.Global().Call("addEventListener", "beforeunload", js.NewCallback(func(args []js.Value) {
-		app.OnStop()
-		app.OnDispose()
+		if !browserRuntime.isStopped {
+			app.OnStop()
+			app.OnDispose()
+		}
 	}))
 
 	// -------------------------------------------------------------------- //
@@ -152,6 +169,7 @@ func doRun(app App, settings *Settings) error {
 			browserRuntime.tickTicker.Stop()
 			browserRuntime.renderTicker.Stop()
 			renderFrame.Release()
+			browserRuntime.isStopped = true
 			app.OnStop()
 			jsTge.Call("stop")
 			app.OnDispose()
