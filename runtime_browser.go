@@ -17,6 +17,7 @@ type browserRuntime struct {
 	ticker       *time.Ticker
 	canvas       js.Value
 	isPaused     bool
+	isStopped    bool
 	isPausedChan chan bool
 	tickTicker   *time.Ticker
 	tickEnd      chan bool
@@ -38,8 +39,19 @@ func (runtime browserRuntime) Stop() {
 
 }
 
-func doRun(app App, settings *Settings) error {
-	log.Println("doRun()")
+// Run main entry point of runtime
+func Run(app App) error {
+	log.Println("Run()")
+
+	// -------------------------------------------------------------------- //
+	// Create
+	// -------------------------------------------------------------------- //
+	settings := &defaultSettings
+	err := app.OnCreate(settings)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer app.OnDispose() // Should be never called
 
 	// -------------------------------------------------------------------- //
 	// Init
@@ -54,6 +66,7 @@ func doRun(app App, settings *Settings) error {
 	browserRuntime := browserRuntime{
 		app:          app,
 		isPaused:     true,
+		isStopped:    false,
 		canvas:       canvas,
 		isPausedChan: make(chan bool),
 		tickEnd:      make(chan bool),
@@ -124,8 +137,10 @@ func doRun(app App, settings *Settings) error {
 
 	// Destroy
 	js.Global().Call("addEventListener", "beforeunload", js.NewCallback(func(args []js.Value) {
-		app.OnStop()
-		app.OnDispose()
+		if !browserRuntime.isStopped {
+			app.OnStop()
+			app.OnDispose()
+		}
 	}))
 
 	// -------------------------------------------------------------------- //
@@ -152,6 +167,7 @@ func doRun(app App, settings *Settings) error {
 			browserRuntime.tickTicker.Stop()
 			browserRuntime.renderTicker.Stop()
 			renderFrame.Release()
+			browserRuntime.isStopped = true
 			app.OnStop()
 			jsTge.Call("stop")
 			app.OnDispose()

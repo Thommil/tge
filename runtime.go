@@ -27,17 +27,3 @@ type Runtime interface {
 func init() {
 	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
 }
-
-// Run is the main entry point
-func Run(app App) {
-	log.Println("Run()")
-
-	settings := &defaultSettings
-	app.OnCreate(settings)
-
-	err := doRun(app, settings)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer app.OnDispose()
-}

@@ -81,7 +81,7 @@ BuildBrowser () {
         cp $BUILDER_PATH/browser/tge.js $DIST_PATH
         cp $BUILDER_PATH/browser/tge.css $DIST_PATH
         cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" $DIST_PATH
-        echo "Build success in $DIST_PATH"  
+        echo "Build success in $DIST_PATH"
     else
         rm -rf "$DIST_PATH"
     fi

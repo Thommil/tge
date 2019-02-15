@@ -41,20 +41,28 @@ func (runtime desktopRuntime) Stop() {
 	}()
 }
 
-// -------------------------------------------------------------------- //
-// Main
-// -------------------------------------------------------------------- //
-func doRun(app App, settings *Settings) error {
-	log.Println("doRun()")
+// Run main entry point of runtime
+func Run(app App) error {
+	log.Println("Run()")
+
+	// -------------------------------------------------------------------- //
+	// Create
+	// -------------------------------------------------------------------- //
+	settings := &defaultSettings
+	err := app.OnCreate(settings)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	// -------------------------------------------------------------------- //
 	// Init
 	// -------------------------------------------------------------------- //
-	err := glfw.Init()
+	err = glfw.Init()
 	if err != nil {
 		return err
 	}
 	defer glfw.Terminate()
+	defer app.OnDispose()
 
 	// Fullscreen support
 	var monitor *glfw.Monitor
