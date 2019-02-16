@@ -11,8 +11,8 @@ type App interface {
 	OnStart(runtime Runtime) error
 	OnResize(width int, height int)
 	OnResume()
-	OnRender(elaspedTime time.Duration, locker sync.Locker)
-	OnTick(elaspedTime time.Duration, locker sync.Locker)
+	OnRender(elaspedTime time.Duration, mutex *sync.Mutex)
+	OnTick(elaspedTime time.Duration, mutex *sync.Mutex)
 	OnPause()
 	OnStop()
 	OnDispose() error

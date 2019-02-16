@@ -3,7 +3,7 @@
 package tge
 
 import (
-	log "log"
+	fmt "fmt"
 	sync "sync"
 	time "time"
 
@@ -29,7 +29,6 @@ type mobileRuntime struct {
 	mobile    mobile.App
 	isPaused  bool
 	isStopped bool
-	ticker    *time.Ticker
 	glContext gl.Context
 }
 
@@ -37,7 +36,8 @@ func (runtime *mobileRuntime) Use(plugin Plugin) {
 	runtime.plugins = append(runtime.plugins, plugin)
 	err := plugin.Init(runtime)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		panic(err)
 	}
 }
 
@@ -51,8 +51,7 @@ func (runtime mobileRuntime) GetGlContext() gl.Context {
 
 // Run main entry point of runtime
 func Run(app App) error {
-	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
-	log.Println("Run()")
+	fmt.Println("Run()")
 
 	// -------------------------------------------------------------------- //
 	// Create
@@ -60,7 +59,8 @@ func Run(app App) error {
 	settings := &defaultSettings
 	err := app.OnCreate(settings)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		panic(err)
 	}
 	defer app.OnDispose()
 
@@ -78,24 +78,20 @@ func Run(app App) error {
 	mutex := &sync.Mutex{}
 	startTicker := func() {
 		tpsDelay := time.Duration(1000000000 / settings.TPS)
-		mobileRuntime.ticker = time.NewTicker(tpsDelay)
-		defer mobileRuntime.ticker.Stop() // Avoid leak
-
 		elapsedTpsTime := time.Duration(0)
-		go func() {
-			for now := range mobileRuntime.ticker.C {
-				if !mobileRuntime.isPaused {
-					app.OnTick(elapsedTpsTime, mutex)
-					elapsedTpsTime = tpsDelay - time.Since(now)
-					if elapsedTpsTime < 0 {
-						elapsedTpsTime = 0
-					}
-				} else if mobileRuntime.isStopped {
-					mobileRuntime.ticker.Stop()
-					return
+		for !mobileRuntime.isStopped {
+			if !mobileRuntime.isPaused {
+				now := time.Now()
+				app.OnTick(elapsedTpsTime, mutex)
+				elapsedTpsTime = tpsDelay - time.Since(now)
+				if elapsedTpsTime < 0 {
+					elapsedTpsTime = 0
 				}
+				time.Sleep(elapsedTpsTime)
+			} else {
+				time.Sleep(tpsDelay)
 			}
-		}()
+		}
 	}
 
 	// -------------------------------------------------------------------- //
@@ -113,7 +109,7 @@ func Run(app App) error {
 					mobileRuntime.glContext, _ = e.DrawContext.(gl.Context)
 					app.OnStart(mobileRuntime)
 					mobileRuntime.isStopped = false
-					startTicker()
+					go startTicker()
 					app.OnResume()
 					mobileRuntime.isPaused = false
 
@@ -144,7 +140,7 @@ func Run(app App) error {
 				app.OnResize(e.WidthPx, e.HeightPx)
 
 			case touch.Event:
-				log.Println("OnTouch")
+				fmt.Println("OnTouch")
 
 			}
 

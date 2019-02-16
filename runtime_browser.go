@@ -12,15 +12,18 @@ import (
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
+type BrowserRuntime interface {
+	Runtime
+	GetGlContext() *js.Value
+}
 type browserRuntime struct {
-	app          App
-	plugins      []Plugin
-	ticker       *time.Ticker
-	canvas       js.Value
-	isPaused     bool
-	isStopped    bool
-	tickTicker   *time.Ticker
-	renderTicker *time.Ticker
+	app       App
+	plugins   []Plugin
+	ticker    *time.Ticker
+	canvas    *js.Value
+	isPaused  bool
+	isStopped bool
+	done      chan bool
 }
 
 func (runtime *browserRuntime) Use(plugin Plugin) {
@@ -30,6 +33,19 @@ func (runtime *browserRuntime) Use(plugin Plugin) {
 		fmt.Println(err)
 		panic(err)
 	}
+}
+
+func (runtime *browserRuntime) GetGlContext() *js.Value {
+	glContext := runtime.canvas.Call("getContext", "webgl")
+	if glContext == js.Undefined() {
+		glContext = runtime.canvas.Call("getContext", "experimental-webgl")
+	}
+	if glContext == js.Undefined() {
+		err := fmt.Errorf("No WebGL support found in brower")
+		fmt.Println(err)
+		panic(err)
+	}
+	return &glContext
 }
 
 func (runtime *browserRuntime) Stop() {
@@ -74,7 +90,8 @@ func Run(app App) error {
 		plugins:   make([]Plugin, 0),
 		isPaused:  true,
 		isStopped: true,
-		canvas:    canvas,
+		canvas:    &canvas,
+		done:      make(chan bool),
 	}
 
 	// Start App
@@ -92,23 +109,21 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
 	// -------------------------------------------------------------------- //
-	tpsDelay := time.Duration(1000000000 / settings.TPS)
-	browserRuntime.tickTicker = time.NewTicker(tpsDelay)
-	defer browserRuntime.tickTicker.Stop() // Avoid leak
-
 	mutex := &sync.Mutex{}
+	tpsDelay := time.Duration(1000000000 / settings.TPS)
 	elapsedTpsTime := time.Duration(0)
 	go func() {
-		for now := range browserRuntime.tickTicker.C {
+		for !browserRuntime.isStopped {
 			if !browserRuntime.isPaused {
+				now := time.Now()
 				app.OnTick(elapsedTpsTime, mutex)
 				elapsedTpsTime = tpsDelay - time.Since(now)
 				if elapsedTpsTime < 0 {
 					elapsedTpsTime = 0
 				}
-			} else if browserRuntime.isStopped {
-				browserRuntime.tickTicker.Stop()
-				return
+				time.Sleep(elapsedTpsTime)
+			} else {
+				time.Sleep(tpsDelay)
 			}
 		}
 	}()
@@ -128,19 +143,15 @@ func Run(app App) error {
 	// Focus
 	browserRuntime.canvas.Call("addEventListener", "blur", js.NewCallback(func(args []js.Value) {
 		if !browserRuntime.isStopped && !browserRuntime.isPaused {
-			go func() {
-				browserRuntime.isPaused = true
-				browserRuntime.app.OnPause()
-			}()
+			browserRuntime.isPaused = true
+			browserRuntime.app.OnPause()
 		}
 	}))
 
 	browserRuntime.canvas.Call("addEventListener", "focus", js.NewCallback(func(args []js.Value) {
 		if !browserRuntime.isStopped && browserRuntime.isPaused {
-			go func() {
-				browserRuntime.app.OnResume()
-				browserRuntime.isPaused = false
-			}()
+			browserRuntime.app.OnResume()
+			browserRuntime.isPaused = false
 		}
 	}))
 
@@ -154,32 +165,34 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Render Loop
 	// -------------------------------------------------------------------- //
-	// -------------------------------------------------------------------- //
-	// Render Loop
-	// -------------------------------------------------------------------- //
+	var renderFrame js.Callback
 	fpsDelay := time.Duration(1000000000 / settings.FPS)
 	elapsedFpsTime := time.Duration(0)
-	browserRuntime.renderTicker = time.NewTicker(fpsDelay)
-	defer browserRuntime.renderTicker.Stop() // Avoid leak
 
-	renderFrame := js.NewCallback(func(args []js.Value) {
-		now := time.Now()
-		app.OnRender(elapsedFpsTime, mutex)
-		elapsedFpsTime = fpsDelay - time.Since(now)
-		if elapsedFpsTime < 0 {
-			elapsedFpsTime = 0
+	renderFrame = js.NewCallback(func(args []js.Value) {
+		if !browserRuntime.isPaused {
+			now := time.Now()
+			app.OnRender(elapsedFpsTime, mutex)
+			elapsedFpsTime = fpsDelay - time.Since(now)
+			if elapsedFpsTime < 0 {
+				elapsedFpsTime = 0
+			}
+			time.Sleep(elapsedFpsTime)
+		} else {
+			time.Sleep(fpsDelay)
+		}
+		if !browserRuntime.isStopped {
+			js.Global().Call("requestAnimationFrame", renderFrame)
+		} else {
+			browserRuntime.done <- true
 		}
 	})
+	js.Global().Call("requestAnimationFrame", renderFrame)
 
-	for range browserRuntime.renderTicker.C {
-		if !browserRuntime.isPaused {
-			js.Global().Call("requestAnimationFrame", renderFrame)
-		} else if browserRuntime.isStopped {
-			browserRuntime.renderTicker.Stop()
-			jsTge.Call("stop")
-			return nil
-		}
-	}
+	<-browserRuntime.done
+
+	renderFrame.Release()
+	jsTge.Call("stop")
 
 	return nil
 }
