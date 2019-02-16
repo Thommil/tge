@@ -33,7 +33,7 @@ type mobileRuntime struct {
 	glContext gl.Context
 }
 
-func (runtime mobileRuntime) Use(plugin Plugin) {
+func (runtime *mobileRuntime) Use(plugin Plugin) {
 	runtime.plugins = append(runtime.plugins, plugin)
 	err := plugin.Init(runtime)
 	if err != nil {
@@ -41,7 +41,7 @@ func (runtime mobileRuntime) Use(plugin Plugin) {
 	}
 }
 
-func (runtime mobileRuntime) Stop() {
+func (runtime *mobileRuntime) Stop() {
 	// Not implemented
 }
 
@@ -51,6 +51,7 @@ func (runtime mobileRuntime) GetGlContext() gl.Context {
 
 // Run main entry point of runtime
 func Run(app App) error {
+	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
 	log.Println("Run()")
 
 	// -------------------------------------------------------------------- //

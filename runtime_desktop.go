@@ -52,6 +52,7 @@ func (runtime *desktopRuntime) Stop() {
 
 // Run main entry point of runtime
 func Run(app App) error {
+	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
 	log.Println("Run()")
 
 	// -------------------------------------------------------------------- //

@@ -26,7 +26,7 @@ type browserRuntime struct {
 	renderEnd    chan bool
 }
 
-func (runtime browserRuntime) Use(plugin Plugin) {
+func (runtime *browserRuntime) Use(plugin Plugin) {
 	runtime.plugins = append(runtime.plugins, plugin)
 	err := plugin.Init(runtime)
 	if err != nil {
@@ -34,7 +34,7 @@ func (runtime browserRuntime) Use(plugin Plugin) {
 	}
 }
 
-func (runtime browserRuntime) Stop() {
+func (runtime *browserRuntime) Stop() {
 	runtime.isPaused = true
 	go func() {
 		runtime.isPausedChan <- true
