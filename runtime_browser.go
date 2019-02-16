@@ -126,19 +126,15 @@ func Run(app App) error {
 	// Focus
 	browserRuntime.canvas.Call("addEventListener", "blur", js.NewCallback(func(args []js.Value) {
 		if !browserRuntime.isStopped && !browserRuntime.isPaused {
-			go func() {
-				browserRuntime.isPaused = true
-				browserRuntime.app.OnPause()
-			}()
+			browserRuntime.isPaused = true
+			browserRuntime.app.OnPause()
 		}
 	}))
 
 	browserRuntime.canvas.Call("addEventListener", "focus", js.NewCallback(func(args []js.Value) {
 		if !browserRuntime.isStopped && browserRuntime.isPaused {
-			go func() {
-				browserRuntime.app.OnResume()
-				browserRuntime.isPaused = false
-			}()
+			browserRuntime.app.OnResume()
+			browserRuntime.isPaused = false
 		}
 	}))
 
