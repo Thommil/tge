@@ -14,6 +14,7 @@ import (
 // -------------------------------------------------------------------- //
 type browserRuntime struct {
 	app          App
+	plugins      []Plugin
 	ticker       *time.Ticker
 	canvas       js.Value
 	isPaused     bool
@@ -25,7 +26,15 @@ type browserRuntime struct {
 	renderEnd    chan bool
 }
 
-func (runtime browserRuntime) Stop() {
+func (runtime *browserRuntime) Use(plugin Plugin) {
+	runtime.plugins = append(runtime.plugins, plugin)
+	err := plugin.Init(runtime)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func (runtime *browserRuntime) Stop() {
 	runtime.isPaused = true
 	go func() {
 		runtime.isPausedChan <- true
@@ -57,14 +66,18 @@ func Run(app App) error {
 	// Init
 	// -------------------------------------------------------------------- //
 	jsTge := js.Global().Get("tge")
-	jsTge.Call("resize", settings.Width, settings.Height)
-	jsTge.Call("setFullscreen", settings.Fullscreen)
+	if settings.Fullscreen {
+		jsTge.Call("setFullscreen", settings.Fullscreen)
+	} else {
+		jsTge.Call("resize", settings.Width, settings.Height)
+	}
 
 	canvas := jsTge.Call("init")
 
 	// Instanciate Runtime
 	browserRuntime := &browserRuntime{
 		app:          app,
+		plugins:      make([]Plugin, 0),
 		isPaused:     true,
 		isStopped:    false,
 		canvas:       canvas,

@@ -24,6 +24,7 @@ func init() {
 // -------------------------------------------------------------------- //
 type desktopRuntime struct {
 	app          App
+	plugins      []Plugin
 	window       *glfw.Window
 	isPaused     bool
 	tickTicker   *time.Ticker
@@ -32,7 +33,15 @@ type desktopRuntime struct {
 	renderEnd    chan bool
 }
 
-func (runtime desktopRuntime) Stop() {
+func (runtime *desktopRuntime) Use(plugin Plugin) {
+	runtime.plugins = append(runtime.plugins, plugin)
+	err := plugin.Init(runtime)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func (runtime *desktopRuntime) Stop() {
 	runtime.isPaused = true
 	runtime.app.OnPause()
 	go func() {
@@ -43,6 +52,7 @@ func (runtime desktopRuntime) Stop() {
 
 // Run main entry point of runtime
 func Run(app App) error {
+	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
 	log.Println("Run()")
 
 	// -------------------------------------------------------------------- //
@@ -59,7 +69,7 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	err = glfw.Init()
 	if err != nil {
-		return err
+		log.Fatalln(err)
 	}
 	defer glfw.Terminate()
 	defer app.OnDispose()
@@ -80,7 +90,7 @@ func Run(app App) error {
 	// Window creation
 	window, err := glfw.CreateWindow(settings.Width, settings.Height, settings.Name, monitor, nil)
 	if err != nil {
-		return err
+		log.Fatalln(err)
 	}
 
 	// Start GLFW
@@ -89,11 +99,19 @@ func Run(app App) error {
 	// Instanciate Runtime
 	desktopRuntime := &desktopRuntime{
 		app:       app,
+		plugins:   make([]Plugin, 0),
 		window:    window,
 		isPaused:  true,
 		tickEnd:   make(chan bool),
 		renderEnd: make(chan bool),
 	}
+
+	// Unload plugins
+	defer func() {
+		for _, plugin := range desktopRuntime.plugins {
+			plugin.Dispose()
+		}
+	}()
 
 	// Start App
 	app.OnStart(desktopRuntime)

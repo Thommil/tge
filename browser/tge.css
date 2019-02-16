@@ -3,7 +3,7 @@ html {
 }
 
 body {
-    background-color: #000;
+    background-color: #280a28;
     min-height: 100%;
     display: flex;
     justify-content: center;
@@ -13,7 +13,8 @@ body {
 }
 
 #canvas {                
-    background-color: #FFF;
+    background-color: #280a28;
+    border: 0;
     opacity: 0;
 }
 

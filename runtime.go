@@ -1,7 +1,6 @@
 package tge
 
 import (
-	log "log"
 	sync "sync"
 	time "time"
 )
@@ -21,9 +20,12 @@ type App interface {
 
 // Runtime API
 type Runtime interface {
+	Use(plugin Plugin)
 	Stop()
 }
 
-func init() {
-	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
+// Plugin API
+type Plugin interface {
+	Init(runtime Runtime) error
+	Dispose()
 }

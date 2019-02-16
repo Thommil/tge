@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Env/Opts
 usage() { echo "Usage: build.sh [-t <desktop|browser|android|ios>] PROJECT_PATH" 1>&2; exit 1; }
@@ -48,20 +48,18 @@ BuildDesktop () {
     mkdir -p "$DIST_PATH"
     cd $PROJECT_PATH >/dev/null
 
+    echo " > copying resources"
+    if [ ! -d "$PROJECT_PATH/desktop" ]; then
+        cp -rp "$BUILDER_PATH/desktop" "$PROJECT_PATH"
+    fi
+    cp -rp "$PROJECT_PATH/desktop" $(dirname $DIST_PATH)
+
     echo " > building"
     go build -o "$DIST_PATH/$(basename $PROJECT_PATH)"    
-
     if [ "$?" -eq "0" ]; then
         if [ $OS == "windows" ]; then
             mv "$DIST_PATH/$(basename $PROJECT_PATH)" "$DIST_PATH/$(basename $PROJECT_PATH).exe"
         fi
-
-        echo " > copying resources"
-        if [ ! -d "$PROJECT_PATH/desktop" ]; then
-            cp -rp "$BUILDER_PATH/desktop" "$PROJECT_PATH"
-        fi
-        cp -rp "$PROJECT_PATH/desktop" $(dirname $DIST_PATH)
-        
         echo " > Build done in $DIST_PATH"  
     else
         echo " > Build failed" 1>&2
@@ -73,15 +71,17 @@ BuildDesktop () {
 
 # Build Android
 BuildAndroid () {
-    echo " > init gomobile"
-    if [ "$ANDROID_NDK" == "" ]; then
-        echo "ERROR : ANDROID_NDK is not set (should be \$ANDROID_HOME/ndk-bundle)" >&2
-        echo " > Build failed" 1>&2
-        exit 5
+    echo " > init gomobile"    
+    command -v gomobile >/dev/null 2>&1 || { echo "ERROR : gomobile command not found in PATH, see: https://github.com/golang/go/wiki/Mobile." 1>&2; exit 1; }
+    if [ ! -d $GOPATH/pkg/gomobile/ndk-toolchains ]; then
+        if [ "$ANDROID_NDK" == "" ]; then
+            echo "ERROR : ANDROID_NDK is not set (should be \$ANDROID_HOME/ndk-bundle), see https://developer.android.com/ndk/guides/." >&2
+            echo " > Build failed" 1>&2
+            exit 5
+        fi
+        gomobile init -ndk $ANDROID_NDK     
     fi
-    command -v gomobile >/dev/null 2>&1 || { echo "ERROR : gomobile command not found in PATH" 1>&2; exit 1; }
-    #gomobile init -ndk $ANDROID_NDK
-    
+
     echo " > cleaning"
     rm -rf "$DIST_PATH"
     mkdir -p "$DIST_PATH"
@@ -94,15 +94,15 @@ BuildAndroid () {
 
     echo " > Building"
     cd $PROJECT_PATH >/dev/null
-    gomobile build -target=android -o "$DIST_PATH/$(basename $PROJECT_PATH).apk"    
+    gomobile build -tags i386 -target=android -o "$DIST_PATH/$(basename $PROJECT_PATH).apk"    
     
     if [ "$?" -eq "0" ]; then                
         echo " > Build done in $DIST_PATH"  
-        #rm -f "$PROJECT_PATH/AndroidManifest.xml"
+        rm -f "$PROJECT_PATH/AndroidManifest.xml"
     else
         echo " > Build failed" 1>&2
         rm -rf "$DIST_PATH"
-        #rm -f "$PROJECT_PATH/AndroidManifest.xml"
+        rm -f "$PROJECT_PATH/AndroidManifest.xml"
     fi
 
     cd - > /dev/null
@@ -123,18 +123,17 @@ BuildBrowser () {
     rm -rf "$DIST_PATH"
     mkdir -p "$DIST_PATH"
 
+    echo " > copying resources"
+    if [ ! -d "$PROJECT_PATH/browser" ]; then
+        cp -rp "$BUILDER_PATH/browser" "$PROJECT_PATH"
+    fi
+    cp -rp "$PROJECT_PATH/browser" $(dirname $DIST_PATH)
+    cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" $DIST_PATH
+
     echo " > building"
     cd $PROJECT_PATH >/dev/null
-    GOOS=js GOARCH=wasm go build -o "$DIST_PATH/main.wasm"    
-    
+    GOOS=js GOARCH=wasm go build -o "$DIST_PATH/main.wasm"        
     if [ "$?" -eq "0" ]; then
-        echo " > copying resources"
-        if [ ! -d "$PROJECT_PATH/browser" ]; then
-            cp -rp "$BUILDER_PATH/browser" "$PROJECT_PATH"
-        fi
-        cp -rp "$PROJECT_PATH/browser" $(dirname $DIST_PATH)
-        cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" $DIST_PATH
-
         echo " > Build done in $DIST_PATH"
     else
         echo " > Build failed" 1>&2
