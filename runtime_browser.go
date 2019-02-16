@@ -14,6 +14,7 @@ import (
 // -------------------------------------------------------------------- //
 type browserRuntime struct {
 	app          App
+	plugins      []Plugin
 	ticker       *time.Ticker
 	canvas       js.Value
 	isPaused     bool
@@ -23,6 +24,14 @@ type browserRuntime struct {
 	tickEnd      chan bool
 	renderTicker *time.Ticker
 	renderEnd    chan bool
+}
+
+func (runtime browserRuntime) Use(plugin Plugin) {
+	runtime.plugins = append(runtime.plugins, plugin)
+	err := plugin.Init(runtime)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func (runtime browserRuntime) Stop() {
@@ -68,6 +77,7 @@ func Run(app App) error {
 	// Instanciate Runtime
 	browserRuntime := &browserRuntime{
 		app:          app,
+		plugins:      make([]Plugin, 0),
 		isPaused:     true,
 		isStopped:    false,
 		canvas:       canvas,

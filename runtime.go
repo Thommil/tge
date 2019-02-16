@@ -21,12 +21,14 @@ type App interface {
 
 // Runtime API
 type Runtime interface {
+	Use(plugin Plugin)
 	Stop()
 }
 
 // Plugin API
 type Plugin interface {
-	Init(runtime Runtime)
+	Init(runtime Runtime) error
+	Dispose()
 }
 
 func init() {

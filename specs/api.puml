@@ -14,26 +14,21 @@ interface App {
 }
 
 class tge << (P,#FF7700) Package >> {
-    {static} Run(App) error
+    {static} Run(App)
 }
 
 interface Runtime {
+    Use(Plugin)
     Stop()
 }
 
-interface Plugin{
+interface Plugin{    
     Init(Runtime) error
+    Dispose()
 }
 
-class renderer << (P,#FF7700) Package >> {
-}
-class ui << (P,#FF7700) Package >> {
-}
-class player << (P,#FF7700) Package >> {
-}
-class physics << (P,#FF7700) Package >> {
-}
-class ai << (P,#FF7700) Package >> {
+class "tge-gl" << (P,#FF7700) Package >> {
+    GetPlugin() Plugin
 }
 
 ' Relations
@@ -42,13 +37,9 @@ tge --> Runtime : instanciate
 App <-- Runtime : manage
 App --> Runtime : use
 App --> Plugin : use
+Runtime --> Plugin : manage
 
-Plugin <|-- renderer
-Plugin <|-- player
-Plugin <|-- ui
-Plugin <|-- physics
-Plugin <|-- ai
-
+App ..> "tge-gl" : use
 
 @enduml
 ```

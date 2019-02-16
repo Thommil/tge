@@ -25,11 +25,20 @@ type MobileRuntime interface {
 // -------------------------------------------------------------------- //
 type mobileRuntime struct {
 	app       App
+	plugins   []Plugin
 	mobile    mobile.App
 	isPaused  bool
 	ticker    *time.Ticker
 	tickEnd   chan bool
 	glContext gl.Context
+}
+
+func (runtime mobileRuntime) Use(plugin Plugin) {
+	runtime.plugins = append(runtime.plugins, plugin)
+	err := plugin.Init(runtime)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func (runtime mobileRuntime) Stop() {
@@ -56,6 +65,7 @@ func Run(app App) error {
 	// Instanciate Runtime
 	mobileRuntime := &mobileRuntime{
 		app:      app,
+		plugins:  make([]Plugin, 0),
 		isPaused: true,
 		tickEnd:  make(chan bool),
 	}
