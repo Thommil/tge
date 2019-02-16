@@ -27,10 +27,9 @@ type desktopRuntime struct {
 	plugins      []Plugin
 	window       *glfw.Window
 	isPaused     bool
+	isStopped    bool
 	tickTicker   *time.Ticker
-	tickEnd      chan bool
 	renderTicker *time.Ticker
-	renderEnd    chan bool
 }
 
 func (runtime *desktopRuntime) Use(plugin Plugin) {
@@ -42,12 +41,12 @@ func (runtime *desktopRuntime) Use(plugin Plugin) {
 }
 
 func (runtime *desktopRuntime) Stop() {
-	runtime.isPaused = true
-	runtime.app.OnPause()
-	go func() {
-		runtime.tickEnd <- true
-		runtime.renderEnd <- true
-	}()
+	if !runtime.isPaused {
+		runtime.isPaused = true
+		runtime.app.OnPause()
+	}
+	runtime.isStopped = true
+	runtime.app.OnStop()
 }
 
 // Run main entry point of runtime
@@ -63,6 +62,7 @@ func Run(app App) error {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer app.OnDispose()
 
 	// -------------------------------------------------------------------- //
 	// Init
@@ -72,7 +72,6 @@ func Run(app App) error {
 		log.Fatalln(err)
 	}
 	defer glfw.Terminate()
-	defer app.OnDispose()
 
 	// Fullscreen support
 	var monitor *glfw.Monitor
@@ -92,6 +91,7 @@ func Run(app App) error {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer window.SetShouldClose(true)
 
 	// Start GLFW
 	window.MakeContextCurrent()
@@ -102,8 +102,7 @@ func Run(app App) error {
 		plugins:   make([]Plugin, 0),
 		window:    window,
 		isPaused:  true,
-		tickEnd:   make(chan bool),
-		renderEnd: make(chan bool),
+		isStopped: true,
 	}
 
 	// Unload plugins
@@ -115,6 +114,7 @@ func Run(app App) error {
 
 	// Start App
 	app.OnStart(desktopRuntime)
+	desktopRuntime.isStopped = false
 
 	// OS Specific - Windows do not focus at start
 	if runtime.GOOS == "windows" {
@@ -128,23 +128,21 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	tpsDelay := time.Duration(1000000000 / settings.TPS)
 	desktopRuntime.tickTicker = time.NewTicker(tpsDelay)
-	defer desktopRuntime.tickTicker.Stop()
+	defer desktopRuntime.tickTicker.Stop() // Avoid leak
 
 	mutex := &sync.Mutex{}
 	elapsedTpsTime := time.Duration(0)
 	go func() {
-		for {
-			select {
-			case <-desktopRuntime.tickEnd:
-				return
-			case now := <-desktopRuntime.tickTicker.C:
-				if !desktopRuntime.isPaused {
-					app.OnTick(elapsedTpsTime, mutex)
-					elapsedTpsTime = tpsDelay - time.Since(now)
-					if elapsedTpsTime < 0 {
-						elapsedTpsTime = 0
-					}
+		for now := range desktopRuntime.tickTicker.C {
+			if !desktopRuntime.isPaused {
+				app.OnTick(elapsedTpsTime, mutex)
+				elapsedTpsTime = tpsDelay - time.Since(now)
+				if elapsedTpsTime < 0 {
+					elapsedTpsTime = 0
 				}
+			} else if desktopRuntime.isStopped {
+				desktopRuntime.tickTicker.Stop()
+				return
 			}
 		}
 	}()
@@ -190,23 +188,22 @@ func Run(app App) error {
 	fpsDelay := time.Duration(1000000000 / settings.FPS)
 	elapsedFpsTime := time.Duration(0)
 	desktopRuntime.renderTicker = time.NewTicker(fpsDelay)
-	defer desktopRuntime.renderTicker.Stop()
+	defer desktopRuntime.renderTicker.Stop() // Avoid leak
 
-	for {
-		select {
-		case <-desktopRuntime.renderEnd:
-			app.OnStop()
-			return nil
-		case now := <-desktopRuntime.renderTicker.C:
-			if !desktopRuntime.isPaused {
-				app.OnRender(elapsedFpsTime, mutex)
-				window.SwapBuffers()
-				elapsedFpsTime = fpsDelay - time.Since(now)
-				if elapsedFpsTime < 0 {
-					elapsedFpsTime = 0
-				}
+	for now := range desktopRuntime.renderTicker.C {
+		if !desktopRuntime.isPaused {
+			app.OnRender(elapsedFpsTime, mutex)
+			window.SwapBuffers()
+			elapsedFpsTime = fpsDelay - time.Since(now)
+			if elapsedFpsTime < 0 {
+				elapsedFpsTime = 0
 			}
+		} else if desktopRuntime.isStopped {
+			desktopRuntime.renderTicker.Stop()
+			return nil
 		}
 		glfw.PollEvents()
 	}
+
+	return nil
 }
