@@ -3,7 +3,7 @@
 package tge
 
 import (
-	log "log"
+	fmt "fmt"
 	sync "sync"
 	time "time"
 
@@ -37,7 +37,8 @@ func (runtime *mobileRuntime) Use(plugin Plugin) {
 	runtime.plugins = append(runtime.plugins, plugin)
 	err := plugin.Init(runtime)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Fatalln(err)
+		panic(err)
 	}
 }
 
@@ -51,8 +52,7 @@ func (runtime mobileRuntime) GetGlContext() gl.Context {
 
 // Run main entry point of runtime
 func Run(app App) error {
-	log.SetFlags(log.Ltime | log.Lmicroseconds | log.Lshortfile)
-	log.Println("Run()")
+	fmt.Println("Run()")
 
 	// -------------------------------------------------------------------- //
 	// Create
@@ -60,7 +60,8 @@ func Run(app App) error {
 	settings := &defaultSettings
 	err := app.OnCreate(settings)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Fatalln(err)
+		panic(err)
 	}
 	defer app.OnDispose()
 
@@ -144,7 +145,7 @@ func Run(app App) error {
 				app.OnResize(e.WidthPx, e.HeightPx)
 
 			case touch.Event:
-				log.Println("OnTouch")
+				fmt.Println("OnTouch")
 
 			}
 

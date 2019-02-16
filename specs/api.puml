@@ -6,8 +6,8 @@ interface App {
     OnStart(Runtime) error
     OnResize(int, int)
     OnResume()
-    OnRender(Duration, Locker)
-    OnTick(Duration, Locker)
+    OnRender(Duration, Mutex)
+    OnTick(Duration, Mutex)
     OnPause()
     OnStop()
     OnDispose()

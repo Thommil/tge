@@ -12,9 +12,10 @@ body {
     padding: 0;
 }
 
-#canvas {                
-    background-color: #280a28;
+#canvas, #canvas:focus {                
+    background-color: #FFF;
     border: 0;
+    outline: none;
     opacity: 0;
 }
 
