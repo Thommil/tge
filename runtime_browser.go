@@ -12,11 +12,15 @@ import (
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
+type BrowserRuntime interface {
+	Runtime
+	GetGlContext() *js.Value
+}
 type browserRuntime struct {
 	app       App
 	plugins   []Plugin
 	ticker    *time.Ticker
-	canvas    js.Value
+	canvas    *js.Value
 	isPaused  bool
 	isStopped bool
 	done      chan bool
@@ -29,6 +33,19 @@ func (runtime *browserRuntime) Use(plugin Plugin) {
 		fmt.Println(err)
 		panic(err)
 	}
+}
+
+func (runtime *browserRuntime) GetGlContext() *js.Value {
+	glContext := runtime.canvas.Call("getContext", "webgl")
+	if glContext == js.Undefined() {
+		glContext = runtime.canvas.Call("getContext", "experimental-webgl")
+	}
+	if glContext == js.Undefined() {
+		err := fmt.Errorf("No WebGL support found in brower")
+		fmt.Println(err)
+		panic(err)
+	}
+	return &glContext
 }
 
 func (runtime *browserRuntime) Stop() {
@@ -73,7 +90,7 @@ func Run(app App) error {
 		plugins:   make([]Plugin, 0),
 		isPaused:  true,
 		isStopped: true,
-		canvas:    canvas,
+		canvas:    &canvas,
 		done:      make(chan bool),
 	}
 
