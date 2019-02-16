@@ -133,9 +133,9 @@ func Run(app App) error {
 	go func() {
 		for !desktopRuntime.isStopped {
 			if !desktopRuntime.isPaused {
-				now := time.Now().UnixNano()
+				now := time.Now()
 				app.OnTick(elapsedTpsTime, mutex)
-				elapsedTpsTime = time.Duration(int64(tpsDelay) - (time.Now().UnixNano() - now))
+				elapsedTpsTime = tpsDelay - time.Since(now)
 				if elapsedTpsTime < 0 {
 					elapsedTpsTime = 0
 				}
@@ -188,10 +188,10 @@ func Run(app App) error {
 	elapsedFpsTime := time.Duration(0)
 	for !desktopRuntime.isStopped {
 		if !desktopRuntime.isPaused {
-			now := time.Now().UnixNano()
+			now := time.Now()
 			app.OnRender(elapsedFpsTime, mutex)
 			window.SwapBuffers()
-			elapsedFpsTime = time.Duration(int64(fpsDelay) - (time.Now().UnixNano() - now))
+			elapsedFpsTime = fpsDelay - time.Since(now)
 			if elapsedFpsTime < 0 {
 				elapsedFpsTime = 0
 			}

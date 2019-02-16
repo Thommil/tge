@@ -98,9 +98,9 @@ func Run(app App) error {
 	go func() {
 		for !browserRuntime.isStopped {
 			if !browserRuntime.isPaused {
-				now := time.Now().UnixNano()
+				now := time.Now()
 				app.OnTick(elapsedTpsTime, mutex)
-				elapsedTpsTime = time.Duration(int64(tpsDelay) - (time.Now().UnixNano() - now))
+				elapsedTpsTime = tpsDelay - time.Since(now)
 				if elapsedTpsTime < 0 {
 					elapsedTpsTime = 0
 				}
@@ -154,9 +154,9 @@ func Run(app App) error {
 
 	renderFrame = js.NewCallback(func(args []js.Value) {
 		if !browserRuntime.isPaused {
-			now := time.Now().UnixNano()
+			now := time.Now()
 			app.OnRender(elapsedFpsTime, mutex)
-			elapsedFpsTime = time.Duration(int64(fpsDelay) - (time.Now().UnixNano() - now))
+			elapsedFpsTime = fpsDelay - time.Since(now)
 			if elapsedFpsTime < 0 {
 				elapsedFpsTime = 0
 			}

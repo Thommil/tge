@@ -81,9 +81,9 @@ func Run(app App) error {
 		elapsedTpsTime := time.Duration(0)
 		for !mobileRuntime.isStopped {
 			if !mobileRuntime.isPaused {
-				now := time.Now().UnixNano()
+				now := time.Now()
 				app.OnTick(elapsedTpsTime, mutex)
-				elapsedTpsTime = time.Duration(int64(tpsDelay) - (time.Now().UnixNano() - now))
+				elapsedTpsTime = tpsDelay - time.Since(now)
 				if elapsedTpsTime < 0 {
 					elapsedTpsTime = 0
 				}
@@ -124,10 +124,10 @@ func Run(app App) error {
 			case paint.Event:
 				if !mobileRuntime.isPaused {
 					if mobileRuntime.glContext != nil && !e.External {
-						now := time.Now().UnixNano()
+						now := time.Now()
 						app.OnRender(elapsedFpsTime, mutex)
 						a.Publish()
-						elapsedFpsTime = time.Duration(int64(fpsDelay) - (time.Now().UnixNano() - now))
+						elapsedFpsTime = fpsDelay - time.Since(now)
 						if elapsedFpsTime < 0 {
 							elapsedFpsTime = 0
 						}
