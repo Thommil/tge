@@ -28,8 +28,8 @@ type mobileRuntime struct {
 	plugins   []Plugin
 	mobile    mobile.App
 	isPaused  bool
+	isStopped bool
 	ticker    *time.Ticker
-	tickEnd   chan bool
 	glContext gl.Context
 }
 
@@ -62,13 +62,14 @@ func Run(app App) error {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer app.OnDispose()
 
 	// Instanciate Runtime
 	mobileRuntime := &mobileRuntime{
-		app:      app,
-		plugins:  make([]Plugin, 0),
-		isPaused: true,
-		tickEnd:  make(chan bool),
+		app:       app,
+		plugins:   make([]Plugin, 0),
+		isPaused:  true,
+		isStopped: true,
 	}
 
 	// -------------------------------------------------------------------- //
@@ -78,21 +79,20 @@ func Run(app App) error {
 	startTicker := func() {
 		tpsDelay := time.Duration(1000000000 / settings.TPS)
 		mobileRuntime.ticker = time.NewTicker(tpsDelay)
+		defer mobileRuntime.ticker.Stop() // Avoid leak
 
 		elapsedTpsTime := time.Duration(0)
 		go func() {
-			for {
-				select {
-				case <-mobileRuntime.tickEnd:
-					return
-				case now := <-mobileRuntime.ticker.C:
-					if !mobileRuntime.isPaused {
-						app.OnTick(elapsedTpsTime, mutex)
-						elapsedTpsTime = tpsDelay - time.Since(now)
-						if elapsedTpsTime < 0 {
-							elapsedTpsTime = 0
-						}
+			for now := range mobileRuntime.ticker.C {
+				if !mobileRuntime.isPaused {
+					app.OnTick(elapsedTpsTime, mutex)
+					elapsedTpsTime = tpsDelay - time.Since(now)
+					if elapsedTpsTime < 0 {
+						elapsedTpsTime = 0
 					}
+				} else if mobileRuntime.isStopped {
+					mobileRuntime.ticker.Stop()
+					return
 				}
 			}
 		}()
@@ -112,15 +112,15 @@ func Run(app App) error {
 				case lifecycle.StageFocused:
 					mobileRuntime.glContext, _ = e.DrawContext.(gl.Context)
 					app.OnStart(mobileRuntime)
+					mobileRuntime.isStopped = false
 					startTicker()
 					app.OnResume()
 					mobileRuntime.isPaused = false
 
 				case lifecycle.StageAlive:
 					mobileRuntime.isPaused = true
-					mobileRuntime.ticker.Stop()
-					mobileRuntime.tickEnd <- true
 					app.OnPause()
+					mobileRuntime.isStopped = true
 					app.OnStop()
 					mobileRuntime.glContext = nil
 				}
@@ -150,7 +150,6 @@ func Run(app App) error {
 
 		}
 	})
-	defer app.OnDispose()
 
 	return nil
 }

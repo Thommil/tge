@@ -3,7 +3,7 @@
 package tge
 
 import (
-	log "log"
+	fmt "fmt"
 	sync "sync"
 	js "syscall/js"
 	time "time"
@@ -19,38 +19,32 @@ type browserRuntime struct {
 	canvas       js.Value
 	isPaused     bool
 	isStopped    bool
-	isPausedChan chan bool
 	tickTicker   *time.Ticker
-	tickEnd      chan bool
 	renderTicker *time.Ticker
-	renderEnd    chan bool
 }
 
 func (runtime *browserRuntime) Use(plugin Plugin) {
 	runtime.plugins = append(runtime.plugins, plugin)
 	err := plugin.Init(runtime)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		panic(err)
 	}
 }
 
 func (runtime *browserRuntime) Stop() {
-	runtime.isPaused = true
-	go func() {
-		runtime.isPausedChan <- true
+	if !runtime.isPaused {
+		runtime.isPaused = true
 		runtime.app.OnPause()
-		go func() {
-
-			runtime.tickEnd <- true
-			runtime.renderEnd <- true
-		}()
-	}()
-
+	}
+	runtime.isStopped = true
+	runtime.app.OnStop()
+	runtime.app.OnDispose()
 }
 
 // Run main entry point of runtime
 func Run(app App) error {
-	log.Println("Run()")
+	fmt.Println("Run()")
 
 	// -------------------------------------------------------------------- //
 	// Create
@@ -58,9 +52,9 @@ func Run(app App) error {
 	settings := &defaultSettings
 	err := app.OnCreate(settings)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		panic(err)
 	}
-	defer app.OnDispose() // Should be never called
 
 	// -------------------------------------------------------------------- //
 	// Init
@@ -76,20 +70,22 @@ func Run(app App) error {
 
 	// Instanciate Runtime
 	browserRuntime := &browserRuntime{
-		app:          app,
-		plugins:      make([]Plugin, 0),
-		isPaused:     true,
-		isStopped:    false,
-		canvas:       canvas,
-		isPausedChan: make(chan bool),
-		tickEnd:      make(chan bool),
-		renderEnd:    make(chan bool),
+		app:       app,
+		plugins:   make([]Plugin, 0),
+		isPaused:  true,
+		isStopped: true,
+		canvas:    canvas,
 	}
 
 	// Start App
 	app.OnStart(browserRuntime)
+	browserRuntime.isStopped = false
+
+	// Resume App
 	app.OnResume()
 	browserRuntime.isPaused = false
+
+	// Resize App
 	app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
 		browserRuntime.canvas.Get("clientHeight").Int())
 
@@ -98,23 +94,21 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	tpsDelay := time.Duration(1000000000 / settings.TPS)
 	browserRuntime.tickTicker = time.NewTicker(tpsDelay)
-	defer browserRuntime.tickTicker.Stop()
+	defer browserRuntime.tickTicker.Stop() // Avoid leak
 
 	mutex := &sync.Mutex{}
 	elapsedTpsTime := time.Duration(0)
 	go func() {
-		for {
-			select {
-			case <-browserRuntime.tickEnd:
-				return
-			case now := <-browserRuntime.tickTicker.C:
-				if !browserRuntime.isPaused {
-					app.OnTick(elapsedTpsTime, mutex)
-					elapsedTpsTime = tpsDelay - time.Since(now)
-					if elapsedTpsTime < 0 {
-						elapsedTpsTime = 0
-					}
+		for now := range browserRuntime.tickTicker.C {
+			if !browserRuntime.isPaused {
+				app.OnTick(elapsedTpsTime, mutex)
+				elapsedTpsTime = tpsDelay - time.Since(now)
+				if elapsedTpsTime < 0 {
+					elapsedTpsTime = 0
 				}
+			} else if browserRuntime.isStopped {
+				browserRuntime.tickTicker.Stop()
+				return
 			}
 		}
 	}()
@@ -135,7 +129,7 @@ func Run(app App) error {
 	browserRuntime.canvas.Call("addEventListener", "blur", js.NewCallback(func(args []js.Value) {
 		if !browserRuntime.isStopped && !browserRuntime.isPaused {
 			go func() {
-				browserRuntime.isPausedChan <- true
+				browserRuntime.isPaused = true
 				browserRuntime.app.OnPause()
 			}()
 		}
@@ -145,7 +139,7 @@ func Run(app App) error {
 		if !browserRuntime.isStopped && browserRuntime.isPaused {
 			go func() {
 				browserRuntime.app.OnResume()
-				browserRuntime.isPausedChan <- false
+				browserRuntime.isPaused = false
 			}()
 		}
 	}))
@@ -153,22 +147,23 @@ func Run(app App) error {
 	// Destroy
 	js.Global().Call("addEventListener", "beforeunload", js.NewCallback(func(args []js.Value) {
 		if !browserRuntime.isStopped {
-			app.OnStop()
-			app.OnDispose()
+			browserRuntime.Stop()
 		}
 	}))
 
 	// -------------------------------------------------------------------- //
 	// Render Loop
 	// -------------------------------------------------------------------- //
+	// -------------------------------------------------------------------- //
+	// Render Loop
+	// -------------------------------------------------------------------- //
 	fpsDelay := time.Duration(1000000000 / settings.FPS)
-	now := time.Now()
 	elapsedFpsTime := time.Duration(0)
 	browserRuntime.renderTicker = time.NewTicker(fpsDelay)
-	defer browserRuntime.renderTicker.Stop()
+	defer browserRuntime.renderTicker.Stop() // Avoid leak
 
 	renderFrame := js.NewCallback(func(args []js.Value) {
-		now = time.Now()
+		now := time.Now()
 		app.OnRender(elapsedFpsTime, mutex)
 		elapsedFpsTime = fpsDelay - time.Since(now)
 		if elapsedFpsTime < 0 {
@@ -176,26 +171,15 @@ func Run(app App) error {
 		}
 	})
 
-	for {
-		select {
-		case <-browserRuntime.renderEnd:
-			browserRuntime.tickTicker.Stop()
+	for range browserRuntime.renderTicker.C {
+		if !browserRuntime.isPaused {
+			js.Global().Call("requestAnimationFrame", renderFrame)
+		} else if browserRuntime.isStopped {
 			browserRuntime.renderTicker.Stop()
-			renderFrame.Release()
-			browserRuntime.isStopped = true
-			app.OnStop()
 			jsTge.Call("stop")
-			app.OnDispose()
-			<-make(chan int)
-		case <-browserRuntime.renderTicker.C:
-			select {
-			case browserRuntime.isPaused = <-browserRuntime.isPausedChan:
-			default:
-			}
-			if !browserRuntime.isPaused {
-				js.Global().Call("requestAnimationFrame", renderFrame)
-			}
+			return nil
 		}
 	}
 
+	return nil
 }
