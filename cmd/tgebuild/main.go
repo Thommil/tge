@@ -53,7 +53,7 @@ func findTGERootPath() (string, error) {
 	}
 	var tgeRootPath string
 	err := filepath.Walk(gopath, func(p string, info os.FileInfo, err error) error {
-		if path.Base(p) == "tge.marker" {
+		if !info.IsDir() && info.Name() == "tge.marker" {
 			tgeRootPath = path.Dir(p)
 		}
 		return nil
@@ -294,7 +294,7 @@ func main() {
 var usage = `TGE command line tool builds and packages TGE applications.
 
 To install:
-	$ go get github.com/thommil/tge/cmd/tgebuilder
+	$ go get github.com/thommil/tge/cmd/tgebuild
 	
 Usage:
 	tgebuild [-t target] [-d] package
