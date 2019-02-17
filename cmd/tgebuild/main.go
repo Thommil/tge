@@ -58,6 +58,25 @@ func findTGERootPath() (string, error) {
 		}
 		return nil
 	})
+
+	if err != nil {
+		fmt.Println("NOTICE:\n   > installing TGE in your workspace...")
+		cmd := exec.Command("go", "get", "github.com/thommil/tge")
+		cmd.Env = append(os.Environ())
+		if err := cmd.Run(); err != nil {
+			return "", err
+		}
+
+		return "", fmt.Errorf("Failed to find TGE root path: %s", err)
+	}
+
+	err = filepath.Walk(gopath, func(p string, info os.FileInfo, err error) error {
+		if !info.IsDir() && info.Name() == "tge.marker" {
+			tgeRootPath = path.Dir(p)
+		}
+		return nil
+	})
+
 	if err != nil {
 		return "", fmt.Errorf("Failed to find TGE root path: %s", err)
 	}
