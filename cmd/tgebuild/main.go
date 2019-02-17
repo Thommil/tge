@@ -83,7 +83,7 @@ func (b *Builder) init() error {
 	}
 
 	if _, err = os.Stat(path.Join(b.packagePath, "go.mod")); os.IsNotExist(err) {
-		fmt.Printf("NOTICE:\n   > 'go.mod' not found in package path, tgebuild will not be able to retrieve your dependencies if needed.")
+		fmt.Println("WARNING:\n   > 'go.mod' not found in package path, tgebuild will not be able to retrieve your dependencies if needed.")
 	}
 
 	b.programName = path.Base(b.packagePath)
