@@ -299,6 +299,7 @@ func main() {
 	default:
 		fmt.Printf("ERROR: Unsupported target '%s'\n", *targetFlag)
 		flag.Usage()
+		return
 	}
 
 	if err != nil {
