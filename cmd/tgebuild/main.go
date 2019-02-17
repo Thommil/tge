@@ -60,24 +60,6 @@ func findTGERootPath() (string, error) {
 	})
 
 	if err != nil {
-		fmt.Println("NOTICE:\n   > installing TGE in your workspace...")
-		cmd := exec.Command("go", "get", "github.com/thommil/tge")
-		cmd.Env = append(os.Environ())
-		if err := cmd.Run(); err != nil {
-			return "", err
-		}
-
-		return "", fmt.Errorf("Failed to find TGE root path: %s", err)
-	}
-
-	err = filepath.Walk(gopath, func(p string, info os.FileInfo, err error) error {
-		if !info.IsDir() && info.Name() == "tge.marker" {
-			tgeRootPath = path.Dir(p)
-		}
-		return nil
-	})
-
-	if err != nil {
 		return "", fmt.Errorf("Failed to find TGE root path: %s", err)
 	}
 
@@ -98,6 +80,10 @@ func (b *Builder) init() error {
 
 	if !path.IsAbs(b.packagePath) {
 		b.packagePath = path.Join(b.cwd, b.packagePath)
+	}
+
+	if _, err = os.Stat(path.Join(b.packagePath, "go.mod")); os.IsNotExist(err) {
+		fmt.Printf("NOTICE:\n   > 'go.mod' not found in package path, tgebuild will not be able to retrieve your dependencies if needed.")
 	}
 
 	b.programName = path.Base(b.packagePath)
@@ -299,6 +285,7 @@ func main() {
 	default:
 		fmt.Printf("ERROR: Unsupported target '%s'\n", *targetFlag)
 		flag.Usage()
+		return
 	}
 
 	if err != nil {
