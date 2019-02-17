@@ -228,8 +228,6 @@ func (b *Builder) buildAndroid(packagePath string) error {
 		}
 	}
 
-	b.programName = fmt.Sprintf("%s.apk", b.programName)
-
 	if _, err = os.Stat(path.Join(b.packagePath, b.target, "AndroidManifest.xml")); os.IsNotExist(err) {
 		if err = decentcopy.Copy(path.Join(b.tgeRootPath, b.target, "AndroidManifest.xml"), path.Join(b.packagePath, "AndroidManifest.xml")); err != nil {
 			return err
@@ -240,10 +238,23 @@ func (b *Builder) buildAndroid(packagePath string) error {
 		}
 	}
 
-	cmd := exec.Command(gomobilebin, "build", "-target=android", "-o", path.Join(b.distPath, b.programName))
-	cmd.Env = append(os.Environ())
-	if err := cmd.Run(); err != nil {
-		return err
+	if b.devMode {
+		b.programName = fmt.Sprintf("%s.apk", b.programName)
+
+		cmd := exec.Command(gomobilebin, "build", "-target=android", "-o", path.Join(b.distPath, b.programName))
+		cmd.Env = append(os.Environ())
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	} else {
+		for _, t := range []string{"arm", "386", "amd64", "arm64"} {
+			cmd := exec.Command(gomobilebin, "build", fmt.Sprintf("-target=android/%s", t), "-o", path.Join(b.distPath, fmt.Sprintf("%s-%s.apk", b.programName, t)))
+			cmd.Env = append(os.Environ())
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	if err := b.copyResources(); err != nil {
@@ -256,13 +267,46 @@ func (b *Builder) buildAndroid(packagePath string) error {
 	return nil
 }
 
-func (b *Builder) buildIOS(packagePath string) error {
-	return fmt.Errorf("IOS not supported yet")
+func (b *Builder) buildIOS(packagePath string, bundleID string) error {
+	b.target = "ios"
+	b.packagePath = packagePath
+	err := b.init()
+	if err != nil {
+		return err
+	}
+
+	gomobilebin, err := exec.LookPath("gomobile")
+	if err != nil {
+		gomobilebin = path.Join(b.goPath, "bin", "gomobile")
+		if _, err = os.Stat(gomobilebin); os.IsNotExist(err) {
+			fmt.Println("NOTICE:\n   > installing gomobile in your workspace...")
+			cmd := exec.Command("go", "get", "golang.org/x/mobile/cmd/gomobile")
+			cmd.Env = append(os.Environ())
+			if err := cmd.Run(); err != nil {
+				return err
+			}
+		}
+	}
+
+	b.programName = fmt.Sprintf("%s.app", b.programName)
+
+	cmd := exec.Command(gomobilebin, "build", "-target=ios", "-v", "-o", path.Join(b.distPath, b.programName))
+	cmd.Env = append(os.Environ())
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	if err := b.copyResources(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
 	targetFlag := flag.String("t", "desktop", "build target : desktop, android, ios, browser")
-	devModeFlag := flag.Bool("d", false, "Dev mode, skip clean & resources copy (faster)")
+	devModeFlag := flag.Bool("d", false, "Dev mode, skip clean, assets copy & arch split (faster)")
+	bundleIDFlag := flag.String("b", "", "IOS only, bundleId to use for app")
 	flag.Parse()
 
 	if len(flag.Args()) == 0 {
@@ -281,7 +325,11 @@ func main() {
 	case "android":
 		err = builder.buildAndroid(flag.Args()[0])
 	case "ios":
-		err = builder.buildIOS(flag.Args()[0])
+		if *bundleIDFlag == "" {
+			fmt.Println("ERROR: Missing bunldeId for IOS")
+			return
+		}
+		err = builder.buildIOS(flag.Args()[0], *bundleIDFlag)
 	default:
 		fmt.Printf("ERROR: Unsupported target '%s'\n", *targetFlag)
 		flag.Usage()
@@ -303,6 +351,31 @@ To install:
 	$ go get github.com/thommil/tge/cmd/tgebuild
 	
 Usage:
-	tgebuild [-t target] [-d] package
+	tgebuild [-d] [-t target] [-b bundleId] package
 	
 Use 'tgebuild -h' for arguments details.`
+
+/*
+Build compiles and encodes the app named by the import path.
+
+The named package must define a main function.
+
+The -target flag takes a target system name, either android (the default) or ios.
+
+For -target android, if an AndroidManifest.xml is defined in the package directory, it is added to the APK output. Otherwise, a default manifest is generated. By default, this builds a fat APK for all supported instruction sets (arm, 386, amd64, arm64). A subset of instruction sets can be selected by specifying target type with the architecture name. E.g. -target=android/arm,android/386.
+
+For -target ios, gomobile must be run on an OS X machine with Xcode installed.
+
+If the package directory contains an assets subdirectory, its contents are copied into the output.
+
+Flag -iosversion sets the minimal version of the iOS SDK to compile against. The default version is 6.1.
+
+The -bundleid flag is required for -target ios and sets the bundle ID to use with the app.
+
+The -o flag specifies the output file name. If not specified, the output file name depends on the package built.
+
+The -v flag provides verbose output, including the list of packages built.
+
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, and -work are shared with the build command. For documentation, see 'go help build'.
+
+*/
