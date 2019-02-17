@@ -1,15 +1,27 @@
 # TODO
 P0
- * use TinyGo for wasm
+ * GL examples (tge-examples)
+ * Events support (tge & tge-examples)
+ * Assets support (tge & tge-examples)
+ * Network Support (tge & tge-examples)
+ * IOS Support (tge & tgebuild & tge-gl)
 
 P1
- * Android Mainfest template & icons
- * Add WebPack support to browser version (minify/cache ...)
+ * GL Engine (tge-gl)
+ * Nuklear (tge-nuklear)
+ * AL (tge-al)
+ * Box2D (tge-box2d)
+ * Chipmunk (tge-chipmunk)
+ * Android Manifest template & icons (tge)
+ * Add ServiceWorker support to browser version (tge)
+ * Readme.md doc (all)
+ * GoDoc (all)
   
 P2
- * Test GO version in builder (must be 1.11)
- * Multi monitors support
+ * Vulkan (tge-vulkan)
+ * AI (tge-ai)
+ * Multi monitors support (tge)
 
 # Reminder
-## Install tinygo on MacOS
-LLVM7 > https://github.com/tinygo-org/homebrew-tools
+## TinyGo
+Failed on Ubuntu, retry laters
