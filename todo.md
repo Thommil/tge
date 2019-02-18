@@ -16,6 +16,8 @@ P1
  * Add ServiceWorker support to browser version (tge)
  * Readme.md doc (all)
  * GoDoc (all)
+ * Icons (tge)
+ * Resolution change (tge)
   
 P2
  * Vulkan (tge-vulkan)

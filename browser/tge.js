@@ -21,11 +21,15 @@
             } else {
                 canvasEl.classList.remove('fullscreen');
             }
+            canvasEl.setAttribute('width',canvasEl.clientWidth);
+            canvasEl.setAttribute('height', canvasEl.clientHeight);
         },
 
         resize(width, height) {
             canvasEl.style['width'] = width + 'px';
             canvasEl.style['height'] = height + 'px';
+            canvasEl.setAttribute('width',canvasEl.clientWidth);
+            canvasEl.setAttribute('height', canvasEl.clientHeight);
         },
 
         init() {
