@@ -164,6 +164,30 @@ func (b *Builder) buildDesktop(packagePath string) error {
 		return err
 	}
 
+	if runtime.GOOS == "darwin" {
+		appifybin, err := exec.LookPath("appify")
+		if err != nil {
+			appifybin = path.Join(b.goPath, "bin", "appify")
+			if _, err = os.Stat(appifybin); os.IsNotExist(err) {
+				fmt.Println("NOTICE:\n   > installing appify in your workspace...")
+				cmd = exec.Command("go", "get", "github.com/machinebox/appify")
+				cmd.Env = append(os.Environ())
+				if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+					fmt.Printf("%s\n", stdoutStderr)
+					return err
+				}
+			}
+		}
+
+		os.Chdir(b.distPath)
+		cmd := exec.Command(appifybin, "-name", b.programName, "-icon", path.Join(b.distPath, "icon.png"), path.Join(b.distPath, b.programName))
+		cmd.Env = append(os.Environ())
+		if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+			fmt.Printf("%s\n", stdoutStderr)
+			return err
+		}
+	}
+
 	return nil
 }
 
