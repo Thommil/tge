@@ -155,9 +155,8 @@ func (b *Builder) buildDesktop(packagePath string) error {
 	cmd := exec.Command("go", "build", "-o", path.Join(b.distPath, b.programName))
 	cmd.Env = append(os.Environ())
 
-	stdoutStderr, err := cmd.CombinedOutput()
-	fmt.Printf("%s", stdoutStderr)
-	if err != nil {
+	if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+		fmt.Printf("%s\n", stdoutStderr)
 		return err
 	}
 
@@ -183,9 +182,8 @@ func (b *Builder) buildBrowser(packagePath string) error {
 		"GOOS=js",
 		"GOARCH=wasm",
 	)
-	stdoutStderr, err := cmd.CombinedOutput()
-	fmt.Printf("%s", stdoutStderr)
-	if err != nil {
+	if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+		fmt.Printf("%s\n", stdoutStderr)
 		return err
 	}
 
@@ -215,9 +213,8 @@ func (b *Builder) buildAndroid(packagePath string) error {
 			fmt.Println("NOTICE:\n   > installing gomobile in your workspace...")
 			cmd := exec.Command("go", "get", "golang.org/x/mobile/cmd/gomobile")
 			cmd.Env = append(os.Environ())
-			stdoutStderr, err := cmd.CombinedOutput()
-			fmt.Printf("%s", stdoutStderr)
-			if err != nil {
+			if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+				fmt.Printf("%s\n", stdoutStderr)
 				return err
 			}
 		}
@@ -233,10 +230,9 @@ func (b *Builder) buildAndroid(packagePath string) error {
 		fmt.Println("NOTICE:\n   > initializing gomobile...")
 		cmd := exec.Command("gomobile", "init", "-ndk", androidNDKPath)
 		cmd.Env = append(os.Environ())
-		stdoutStderr, err := cmd.CombinedOutput()
-		fmt.Printf("%s", stdoutStderr)
-		if err != nil {
-			return fmt.Errorf("cannot initialize gomobile: %s", err)
+		if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+			fmt.Printf("%s\n", stdoutStderr)
+			return err
 		}
 	}
 
@@ -255,18 +251,16 @@ func (b *Builder) buildAndroid(packagePath string) error {
 
 		cmd := exec.Command(gomobilebin, "build", "-target=android", "-o", path.Join(b.distPath, b.programName))
 		cmd.Env = append(os.Environ())
-		stdoutStderr, err := cmd.CombinedOutput()
-		fmt.Printf("%s", stdoutStderr)
-		if err != nil {
+		if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+			fmt.Printf("%s\n", stdoutStderr)
 			return err
 		}
 	} else {
 		for _, t := range []string{"arm", "386", "amd64", "arm64"} {
 			cmd := exec.Command(gomobilebin, "build", fmt.Sprintf("-target=android/%s", t), "-o", path.Join(b.distPath, fmt.Sprintf("%s-%s.apk", b.programName, t)))
 			cmd.Env = append(os.Environ())
-			stdoutStderr, err := cmd.CombinedOutput()
-			fmt.Printf("%s", stdoutStderr)
-			if err != nil {
+			if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+				fmt.Printf("%s\n", stdoutStderr)
 				return err
 			}
 		}
@@ -298,9 +292,8 @@ func (b *Builder) buildIOS(packagePath string, bundleID string) error {
 			fmt.Println("NOTICE:\n   > installing gomobile in your workspace...")
 			cmd := exec.Command("go", "get", "golang.org/x/mobile/cmd/gomobile")
 			cmd.Env = append(os.Environ())
-			stdoutStderr, err := cmd.CombinedOutput()
-			fmt.Printf("%s", stdoutStderr)
-			if err != nil {
+			if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+				fmt.Printf("%s\n", stdoutStderr)
 				return err
 			}
 		}
@@ -310,9 +303,8 @@ func (b *Builder) buildIOS(packagePath string, bundleID string) error {
 
 	cmd := exec.Command(gomobilebin, "build", "-target=ios", fmt.Sprintf("-bundleid=%s", bundleID), "-o", path.Join(b.distPath, b.programName))
 	cmd.Env = append(os.Environ())
-	stdoutStderr, err := cmd.CombinedOutput()
-	fmt.Printf("%s", stdoutStderr)
-	if err != nil {
+	if stdoutStderr, err := cmd.CombinedOutput(); err != nil {
+		fmt.Printf("%s\n", stdoutStderr)
 		return err
 	}
 
