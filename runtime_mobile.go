@@ -17,6 +17,7 @@ import (
 
 type MobileRuntime interface {
 	Runtime
+	GetMobileApp() mobile.App
 	GetGlContext() gl.Context
 }
 
@@ -25,7 +26,7 @@ type MobileRuntime interface {
 // -------------------------------------------------------------------- //
 type mobileRuntime struct {
 	app       App
-	plugins   []Plugin
+	plugins   map[string]Plugin
 	mobile    mobile.App
 	isPaused  bool
 	isStopped bool
@@ -33,12 +34,16 @@ type mobileRuntime struct {
 }
 
 func (runtime *mobileRuntime) Use(plugin Plugin) {
-	runtime.plugins = append(runtime.plugins, plugin)
+	runtime.plugins[plugin.GetName()] = plugin
 	err := plugin.Init(runtime)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
+}
+
+func (runtime *mobileRuntime) GetPlugin(name string) Plugin {
+	return runtime.plugins[name]
 }
 
 func (runtime *mobileRuntime) Stop() {
@@ -47,6 +52,10 @@ func (runtime *mobileRuntime) Stop() {
 
 func (runtime mobileRuntime) GetGlContext() gl.Context {
 	return runtime.glContext
+}
+
+func (runtime mobileRuntime) GetMobileApp() mobile.App {
+	return runtime.mobile
 }
 
 // Run main entry point of runtime
@@ -67,10 +76,17 @@ func Run(app App) error {
 	// Instanciate Runtime
 	mobileRuntime := &mobileRuntime{
 		app:       app,
-		plugins:   make([]Plugin, 0),
+		plugins:   make(map[string]Plugin),
 		isPaused:  true,
 		isStopped: true,
 	}
+
+	// Unload plugins
+	defer func() {
+		for _, plugin := range mobileRuntime.plugins {
+			plugin.Dispose()
+		}
+	}()
 
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
@@ -100,7 +116,6 @@ func Run(app App) error {
 	fpsDelay := time.Duration(1000000000 / settings.FPS)
 	elapsedFpsTime := time.Duration(0)
 	mobile.Main(func(a mobile.App) {
-		defer app.OnDispose()
 		for e := range a.Events() {
 			switch e := a.Filter(e).(type) {
 			case lifecycle.Event:

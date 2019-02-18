@@ -10,9 +10,9 @@ type Settings struct {
 	Width int `json:"width" yaml:"width"`
 	// Height of the window if run windowed only
 	Height int `json:"height" yaml:"height"`
-	// FPS (frames per seconds) target rate from 0 to 100
+	// FPS (frames per seconds) target rate
 	FPS int `json:"fps" yaml:"fps"`
-	// TPS (ticks per seconds) target rate from 0 to 100
+	// TPS (ticks per seconds) target rate
 	TPS int `json:"tps" yaml:"tps"`
 }
 
@@ -23,5 +23,5 @@ var defaultSettings = Settings{
 	Width:      640,
 	Height:     480,
 	TPS:        100,
-	FPS:        100,
+	FPS:        60,
 }

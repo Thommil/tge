@@ -21,11 +21,13 @@ type App interface {
 // Runtime API
 type Runtime interface {
 	Use(plugin Plugin)
+	GetPlugin(name string) Plugin
 	Stop()
 }
 
 // Plugin API
 type Plugin interface {
 	Init(runtime Runtime) error
+	GetName() string
 	Dispose()
 }

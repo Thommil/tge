@@ -18,7 +18,7 @@ type BrowserRuntime interface {
 }
 type browserRuntime struct {
 	app       App
-	plugins   []Plugin
+	plugins   map[string]Plugin
 	ticker    *time.Ticker
 	canvas    *js.Value
 	isPaused  bool
@@ -27,12 +27,16 @@ type browserRuntime struct {
 }
 
 func (runtime *browserRuntime) Use(plugin Plugin) {
-	runtime.plugins = append(runtime.plugins, plugin)
+	runtime.plugins[plugin.GetName()] = plugin
 	err := plugin.Init(runtime)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
+}
+
+func (runtime *browserRuntime) GetPlugin(name string) Plugin {
+	return runtime.plugins[name]
 }
 
 func (runtime *browserRuntime) GetGlContext() *js.Value {
@@ -55,6 +59,10 @@ func (runtime *browserRuntime) Stop() {
 	}
 	runtime.isStopped = true
 	runtime.app.OnStop()
+	// Unload plugins
+	for _, plugin := range runtime.plugins {
+		plugin.Dispose()
+	}
 	runtime.app.OnDispose()
 }
 
@@ -87,7 +95,7 @@ func Run(app App) error {
 	// Instanciate Runtime
 	browserRuntime := &browserRuntime{
 		app:       app,
-		plugins:   make([]Plugin, 0),
+		plugins:   make(map[string]Plugin),
 		isPaused:  true,
 		isStopped: true,
 		canvas:    &canvas,

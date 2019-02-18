@@ -11,7 +11,7 @@ import (
 	sync "sync"
 	time "time"
 
-	glfw "github.com/go-gl/glfw/v3.2/glfw"
+	sdl "github.com/veandco/go-sdl2/sdl"
 )
 
 // init ensure that we're running on main thread
@@ -19,24 +19,37 @@ func init() {
 	runtime.LockOSThread()
 }
 
+type DesktopRuntime interface {
+	Runtime
+	GetWindow() *sdl.Window
+}
+
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
 type desktopRuntime struct {
 	app       App
-	plugins   []Plugin
-	window    *glfw.Window
+	plugins   map[string]Plugin
+	window    *sdl.Window
 	isPaused  bool
 	isStopped bool
 }
 
 func (runtime *desktopRuntime) Use(plugin Plugin) {
-	runtime.plugins = append(runtime.plugins, plugin)
+	runtime.plugins[plugin.GetName()] = plugin
 	err := plugin.Init(runtime)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
+}
+
+func (runtime *desktopRuntime) GetPlugin(name string) Plugin {
+	return runtime.plugins[name]
+}
+
+func (runtime *desktopRuntime) GetWindow() *sdl.Window {
+	return runtime.window
 }
 
 func (runtime *desktopRuntime) Stop() {
@@ -66,41 +79,35 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Init
 	// -------------------------------------------------------------------- //
-	err = glfw.Init()
-	if err != nil {
+	if err = sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
-	defer glfw.Terminate()
+	defer sdl.Quit()
 
-	// Fullscreen support
-	var monitor *glfw.Monitor
+	windowFlags := sdl.WINDOW_OPENGL | sdl.WINDOW_RESIZABLE
 	if settings.Fullscreen {
-		monitor = glfw.GetPrimaryMonitor()
-		videoMode := monitor.GetVideoMode()
-		settings.Width = videoMode.Width
-		settings.Height = videoMode.Height
-		glfw.WindowHint(glfw.RedBits, videoMode.RedBits)
-		glfw.WindowHint(glfw.GreenBits, videoMode.GreenBits)
-		glfw.WindowHint(glfw.BlueBits, videoMode.BlueBits)
-		glfw.WindowHint(glfw.RefreshRate, videoMode.RefreshRate)
+		windowFlags = windowFlags | sdl.WINDOW_FULLSCREEN_DESKTOP
 	}
 
 	// Window creation
-	window, err := glfw.CreateWindow(settings.Width, settings.Height, settings.Name, monitor, nil)
+	window, err := sdl.CreateWindow(settings.Name, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
+		int32(settings.Width), int32(settings.Height), uint32(windowFlags))
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
 	}
-	defer window.SetShouldClose(true)
+	defer window.Destroy()
 
-	// Start GLFW
-	window.MakeContextCurrent()
+	context, err := window.GLCreateContext()
+	if err != nil {
+		panic(err)
+	}
 
 	// Instanciate Runtime
 	desktopRuntime := &desktopRuntime{
 		app:       app,
-		plugins:   make([]Plugin, 0),
+		plugins:   make(map[string]Plugin),
 		window:    window,
 		isPaused:  true,
 		isStopped: true,
@@ -112,17 +119,11 @@ func Run(app App) error {
 			plugin.Dispose()
 		}
 	}()
+	defer sdl.GLDeleteContext(context)
 
 	// Start App
 	app.OnStart(desktopRuntime)
 	desktopRuntime.isStopped = false
-
-	// OS Specific - Windows do not focus at start
-	if runtime.GOOS == "windows" {
-		app.OnResume()
-		desktopRuntime.isPaused = false
-		app.OnResize(settings.Width, settings.Height)
-	}
 
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
@@ -147,57 +148,46 @@ func Run(app App) error {
 	}()
 
 	// -------------------------------------------------------------------- //
-	// Callbacks
-	// -------------------------------------------------------------------- //
-	var resizeAtStart sync.Once
-
-	// Resize
-	window.SetSizeCallback(func(w *glfw.Window, width int, height int) {
-		// OS Specific - Windows call resize to 0
-		if !desktopRuntime.isPaused && width > 0 {
-			app.OnResize(width, height)
-		}
-	})
-
-	// Focus
-	window.SetFocusCallback(func(w *glfw.Window, focused bool) {
-		if focused && desktopRuntime.isPaused {
-			app.OnResume()
-			desktopRuntime.isPaused = false
-			// OS Specific - MacOS do not resize at start
-			resizeAtStart.Do(func() {
-				if runtime.GOOS != "windows" {
-					app.OnResize(settings.Width, settings.Height)
-				}
-			})
-		} else if !desktopRuntime.isPaused {
-			desktopRuntime.isPaused = true
-			app.OnPause()
-		}
-	})
-
-	// Destroy
-	window.SetCloseCallback(func(w *glfw.Window) {
-		desktopRuntime.Stop()
-	})
-
-	// -------------------------------------------------------------------- //
 	// Render Loop
 	// -------------------------------------------------------------------- //
+	var resizeAtStart sync.Once
 	fpsDelay := time.Duration(1000000000 / settings.FPS)
 	elapsedFpsTime := time.Duration(0)
 	for !desktopRuntime.isStopped {
+		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+			switch t := event.(type) {
+			case *sdl.QuitEvent:
+				desktopRuntime.Stop()
+			case *sdl.WindowEvent:
+				switch t.Event {
+				case sdl.WINDOWEVENT_FOCUS_GAINED:
+					app.OnResume()
+					desktopRuntime.isPaused = false
+					resizeAtStart.Do(func() {
+						w, h := window.GetSize()
+						app.OnResize(int(w), int(h))
+					})
+				case sdl.WINDOWEVENT_FOCUS_LOST:
+					desktopRuntime.isPaused = true
+					app.OnPause()
+				case sdl.WINDOWEVENT_RESIZED:
+					w, h := window.GetSize()
+					app.OnResize(int(w), int(h))
+				}
+			case *sdl.MouseMotionEvent:
+
+			}
+		}
 		if !desktopRuntime.isPaused {
 			now := time.Now()
 			app.OnRender(elapsedFpsTime, mutex)
-			window.SwapBuffers()
+			window.GLSwap()
 			elapsedFpsTime = fpsDelay - time.Since(now)
 			if elapsedFpsTime < 0 {
 				elapsedFpsTime = 0
 			}
 			time.Sleep(elapsedFpsTime)
 		}
-		glfw.PollEvents()
 	}
 
 	return nil
