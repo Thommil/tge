@@ -38,7 +38,31 @@
         stop() {
             canvasEl.classList.remove('start');
             canvasEl.classList.add('stop');
-        }
+        },
 
+        showError(err) {
+            console.error(err);
+        }
+    }
+
+    window.onload = function(){
+        window.go = new Go();
+        if(WebAssembly.instantiateStreaming) {
+            WebAssembly.instantiateStreaming(fetch("main.wasm"), window.go.importObject).then((result) => {
+                window.go.run(result.instance);
+            }).catch(err=>{
+                showError.showError(err)
+            });
+        } else {
+            fetch('main.wasm').then(response =>
+                response.arrayBuffer()
+              ).then(bytes =>
+                WebAssembly.instantiate(bytes, window.go.importObject)
+              ).then(result => {
+                window.go.run(result.instance);
+            }).catch(err=>{
+                showError.showError(err)
+            });
+        }
     }
 })();
