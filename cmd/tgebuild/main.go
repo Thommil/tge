@@ -181,11 +181,15 @@ func (b *Builder) buildBrowser(packagePath string) error {
 		"GOOS=js",
 		"GOARCH=wasm",
 	)
-	if err := cmd.Run(); err != nil {
+	if err = cmd.Run(); err != nil {
 		return err
 	}
 
-	if err := b.copyResources(); err != nil {
+	if err = decentcopy.Copy(fmt.Sprintf("%s/misc/wasm/wasm_exec.js", runtime.GOROOT()), fmt.Sprintf("%s/wasm_exec.js", b.distPath)); err != nil {
+		return err
+	}
+
+	if err = b.copyResources(); err != nil {
 		return err
 	}
 
@@ -290,7 +294,7 @@ func (b *Builder) buildIOS(packagePath string, bundleID string) error {
 
 	b.programName = fmt.Sprintf("%s.app", b.programName)
 
-	cmd := exec.Command(gomobilebin, "build", "-target=ios", "-v", "-o", path.Join(b.distPath, b.programName))
+	cmd := exec.Command(gomobilebin, "build", "-target=ios", fmt.Sprintf("-bundleid=%s", bundleID), "-o", path.Join(b.distPath, b.programName))
 	cmd.Env = append(os.Environ())
 	if err := cmd.Run(); err != nil {
 		return err
