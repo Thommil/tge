@@ -155,7 +155,9 @@ func (b *Builder) buildDesktop(packagePath string) error {
 	cmd := exec.Command("go", "build", "-o", path.Join(b.distPath, b.programName))
 	cmd.Env = append(os.Environ())
 
-	if err := cmd.Run(); err != nil {
+	stdoutStderr, err := cmd.CombinedOutput()
+	fmt.Printf("%s", stdoutStderr)
+	if err != nil {
 		return err
 	}
 
@@ -181,7 +183,9 @@ func (b *Builder) buildBrowser(packagePath string) error {
 		"GOOS=js",
 		"GOARCH=wasm",
 	)
-	if err = cmd.Run(); err != nil {
+	stdoutStderr, err := cmd.CombinedOutput()
+	fmt.Printf("%s", stdoutStderr)
+	if err != nil {
 		return err
 	}
 
@@ -211,7 +215,9 @@ func (b *Builder) buildAndroid(packagePath string) error {
 			fmt.Println("NOTICE:\n   > installing gomobile in your workspace...")
 			cmd := exec.Command("go", "get", "golang.org/x/mobile/cmd/gomobile")
 			cmd.Env = append(os.Environ())
-			if err := cmd.Run(); err != nil {
+			stdoutStderr, err := cmd.CombinedOutput()
+			fmt.Printf("%s", stdoutStderr)
+			if err != nil {
 				return err
 			}
 		}
@@ -227,7 +233,9 @@ func (b *Builder) buildAndroid(packagePath string) error {
 		fmt.Println("NOTICE:\n   > initializing gomobile...")
 		cmd := exec.Command("gomobile", "init", "-ndk", androidNDKPath)
 		cmd.Env = append(os.Environ())
-		if err := cmd.Run(); err != nil {
+		stdoutStderr, err := cmd.CombinedOutput()
+		fmt.Printf("%s", stdoutStderr)
+		if err != nil {
 			return fmt.Errorf("cannot initialize gomobile: %s", err)
 		}
 	}
@@ -247,14 +255,18 @@ func (b *Builder) buildAndroid(packagePath string) error {
 
 		cmd := exec.Command(gomobilebin, "build", "-target=android", "-o", path.Join(b.distPath, b.programName))
 		cmd.Env = append(os.Environ())
-		if err := cmd.Run(); err != nil {
+		stdoutStderr, err := cmd.CombinedOutput()
+		fmt.Printf("%s", stdoutStderr)
+		if err != nil {
 			return err
 		}
 	} else {
 		for _, t := range []string{"arm", "386", "amd64", "arm64"} {
 			cmd := exec.Command(gomobilebin, "build", fmt.Sprintf("-target=android/%s", t), "-o", path.Join(b.distPath, fmt.Sprintf("%s-%s.apk", b.programName, t)))
 			cmd.Env = append(os.Environ())
-			if err := cmd.Run(); err != nil {
+			stdoutStderr, err := cmd.CombinedOutput()
+			fmt.Printf("%s", stdoutStderr)
+			if err != nil {
 				return err
 			}
 		}
@@ -286,7 +298,9 @@ func (b *Builder) buildIOS(packagePath string, bundleID string) error {
 			fmt.Println("NOTICE:\n   > installing gomobile in your workspace...")
 			cmd := exec.Command("go", "get", "golang.org/x/mobile/cmd/gomobile")
 			cmd.Env = append(os.Environ())
-			if err := cmd.Run(); err != nil {
+			stdoutStderr, err := cmd.CombinedOutput()
+			fmt.Printf("%s", stdoutStderr)
+			if err != nil {
 				return err
 			}
 		}
@@ -296,7 +310,9 @@ func (b *Builder) buildIOS(packagePath string, bundleID string) error {
 
 	cmd := exec.Command(gomobilebin, "build", "-target=ios", fmt.Sprintf("-bundleid=%s", bundleID), "-o", path.Join(b.distPath, b.programName))
 	cmd.Env = append(os.Environ())
-	if err := cmd.Run(); err != nil {
+	stdoutStderr, err := cmd.CombinedOutput()
+	fmt.Printf("%s", stdoutStderr)
+	if err != nil {
 		return err
 	}
 
@@ -308,9 +324,9 @@ func (b *Builder) buildIOS(packagePath string, bundleID string) error {
 }
 
 func main() {
-	targetFlag := flag.String("t", "desktop", "build target : desktop, android, ios, browser")
-	devModeFlag := flag.Bool("d", false, "Dev mode, skip clean, assets copy & arch split (faster)")
-	bundleIDFlag := flag.String("b", "", "IOS only, bundleId to use for app")
+	targetFlag := flag.String("target", "desktop", "build target : desktop, android, ios, browser")
+	devModeFlag := flag.Bool("dev", false, "Dev mode, skip clean, assets copy & arch split (faster)")
+	bundleIDFlag := flag.String("bundleid", "", "IOS only, bundleId to use for app")
 	flag.Parse()
 
 	if len(flag.Args()) == 0 {
@@ -330,7 +346,7 @@ func main() {
 		err = builder.buildAndroid(flag.Args()[0])
 	case "ios":
 		if *bundleIDFlag == "" {
-			fmt.Println("ERROR: Missing bunldeId for IOS")
+			fmt.Println("ERROR: Missing bundleId for IOS (set with -bundleid)")
 			return
 		}
 		err = builder.buildIOS(flag.Args()[0], *bundleIDFlag)
@@ -355,7 +371,7 @@ To install:
 	$ go get github.com/thommil/tge/cmd/tgebuild
 	
 Usage:
-	tgebuild [-d] [-t target] [-b bundleId] package
+	tgebuild [-dev] [-target target] [-bundleid bundleId] package
 	
 Use 'tgebuild -h' for arguments details.`
 
