@@ -152,6 +152,7 @@ func Run(app App) error {
 				}
 
 			case size.Event:
+
 				app.OnResize(e.WidthPx, e.HeightPx)
 
 			case touch.Event:

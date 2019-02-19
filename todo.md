@@ -20,6 +20,7 @@ P1
  * Resolution change (tge)
   
 P2
+ * App name in cmd (tgebuild)
  * Vulkan (tge-vulkan)
  * AI (tge-ai)
  * Multi monitors support (tge)

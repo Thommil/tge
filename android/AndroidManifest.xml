@@ -8,13 +8,14 @@
     platformBuildVersionName="4.0.4-1406430">
 
     <application
-        android:label="Untitled"
+        android:label="TGE App"
         android:debuggable="true">
 
         <activity
-            android:label="Untitled"
+            android:label="TGE App"
             android:name="org.golang.app.GoNativeActivity"
-            android:configChanges="0xa0">
+            android:configChanges="0xa0"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
 
             <meta-data
                 android:name="android.app.lib_name"
