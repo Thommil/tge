@@ -1,13 +1,10 @@
 # TODO
 P0
- * GL examples (tge-examples)
  * Events support (tge & tge-examples)
  * Assets support (tge & tge-examples)
  * Network Support (tge & tge-examples)
- * IOS Support (tge & tgebuild & tge-gl)
 
 P1
- * GL Engine (tge-gl)
  * Nuklear (tge-nuklear)
  * AL (tge-al)
  * Box2D (tge-box2d)
@@ -18,8 +15,10 @@ P1
  * GoDoc (all)
  * Icons (tge)
  * Resolution change (tge)
+ * ZoomEvent (tge)
   
 P2
+ * IOS Support (tge & tgebuild & tge-gl)
  * App name in cmd (tgebuild)
  * Vulkan (tge-vulkan)
  * AI (tge-ai)

@@ -25,19 +25,22 @@ func init() {
 type desktopRuntime struct {
 	app       App
 	plugins   map[string]Plugin
-	window    *sdl.Window
+	host      *sdl.Window
+	context   *sdl.GLContext
 	isPaused  bool
 	isStopped bool
 }
 
 func (runtime *desktopRuntime) Use(plugin Plugin) {
 	name := plugin.GetName()
-	fmt.Printf("Loading plugin %s\n", name)
-	runtime.plugins[name] = plugin
-	err := plugin.Init(runtime)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
+	if _, found := runtime.plugins[name]; !found {
+		runtime.plugins[name] = plugin
+		err := plugin.Init(runtime)
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+		fmt.Printf("Plugin %s loaded\n", name)
 	}
 }
 
@@ -46,12 +49,11 @@ func (runtime *desktopRuntime) GetPlugin(name string) Plugin {
 }
 
 func (runtime *desktopRuntime) GetRenderer() interface{} {
-	renderer, _ := runtime.window.GetRenderer()
-	return renderer
+	return runtime.context
 }
 
 func (runtime *desktopRuntime) GetHost() interface{} {
-	return runtime.window
+	return runtime.host
 }
 
 func (runtime *desktopRuntime) Stop() {
@@ -108,7 +110,8 @@ func Run(app App) error {
 	desktopRuntime := &desktopRuntime{
 		app:       app,
 		plugins:   make(map[string]Plugin),
-		window:    window,
+		host:      window,
+		context:   &context,
 		isPaused:  true,
 		isStopped: true,
 	}
@@ -174,8 +177,42 @@ func Run(app App) error {
 					w, h := window.GetSize()
 					app.OnResize(int(w), int(h))
 				}
+			case *sdl.MouseButtonEvent:
+				if (settings.EventMask & MouseEventEnabled) != 0 {
+					app.OnMouseEvent(
+						MouseEvent{
+							X:      t.X,
+							Y:      t.Y,
+							Type:   Type(t.Type),
+							Button: Button(t.Button),
+						})
+				}
 			case *sdl.MouseMotionEvent:
-
+				if (settings.EventMask & MouseEventEnabled) != 0 {
+					app.OnMouseEvent(
+						MouseEvent{
+							X:      t.X,
+							Y:      t.Y,
+							Type:   TypeMove,
+							Button: ButtonNone,
+						})
+				}
+			case *sdl.MouseWheelEvent:
+				if (settings.EventMask & ScrollEventEnabled) != 0 {
+					app.OnScrollEvent(
+						ScrollEvent{
+							X: t.X,
+							Y: t.Y,
+						})
+				}
+			case *sdl.KeyboardEvent:
+				if (settings.EventMask & KeyEventEnabled) != 0 {
+					app.OnKeyEvent(
+						KeyEvent{
+							Type: Type(t.Type),
+							Key:  sdl.GetKeyName(t.Keysym.Sym),
+						})
+				}
 			}
 		}
 		if !desktopRuntime.isPaused {

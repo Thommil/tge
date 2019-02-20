@@ -24,12 +24,14 @@ type browserRuntime struct {
 
 func (runtime *browserRuntime) Use(plugin Plugin) {
 	name := plugin.GetName()
-	fmt.Printf("Loading plugin %s\n", name)
-	runtime.plugins[name] = plugin
-	err := plugin.Init(runtime)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
+	if _, found := runtime.plugins[name]; !found {
+		runtime.plugins[name] = plugin
+		err := plugin.Init(runtime)
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+		fmt.Printf("Plugin %s loaded\n", name)
 	}
 }
 
@@ -38,8 +40,7 @@ func (runtime *browserRuntime) GetPlugin(name string) Plugin {
 }
 
 func (runtime *browserRuntime) GetHost() interface{} {
-	host := js.Global()
-	return &host
+	return &(js.Global())
 }
 
 func (runtime *browserRuntime) GetRenderer() interface{} {

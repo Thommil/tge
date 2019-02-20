@@ -21,20 +21,22 @@ import (
 type mobileRuntime struct {
 	app       App
 	plugins   map[string]Plugin
-	mobile    mobile.App
+	host      mobile.App
 	isPaused  bool
 	isStopped bool
-	glContext gl.Context
+	context   gl.Context
 }
 
 func (runtime *mobileRuntime) Use(plugin Plugin) {
 	name := plugin.GetName()
-	fmt.Printf("Loading plugin %s\n", name)
-	runtime.plugins[name] = plugin
-	err := plugin.Init(runtime)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
+	if _, found := runtime.plugins[name]; !found {
+		runtime.plugins[name] = plugin
+		err := plugin.Init(runtime)
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+		fmt.Printf("Plugin %s loaded\n", name)
 	}
 }
 
@@ -43,23 +45,15 @@ func (runtime *mobileRuntime) GetPlugin(name string) Plugin {
 }
 
 func (runtime *mobileRuntime) GetRenderer() interface{} {
-	return runtime.glContext
+	return runtime.context
 }
 
 func (runtime *mobileRuntime) GetHost() interface{} {
-	return runtime.mobile
+	return runtime.host
 }
 
 func (runtime *mobileRuntime) Stop() {
 	// Not implemented
-}
-
-func (runtime mobileRuntime) GetGlContext() gl.Context {
-	return runtime.glContext
-}
-
-func (runtime mobileRuntime) GetMobileApp() mobile.App {
-	return runtime.mobile
 }
 
 // Run main entry point of runtime
@@ -123,7 +117,8 @@ func Run(app App) error {
 			case lifecycle.Event:
 				switch e.To {
 				case lifecycle.StageFocused:
-					mobileRuntime.glContext, _ = e.DrawContext.(gl.Context)
+					mobileRuntime.context, _ = e.DrawContext.(gl.Context)
+					mobileRuntime.host = a
 					app.OnStart(mobileRuntime)
 					mobileRuntime.isStopped = false
 					go startTicker()
@@ -135,7 +130,7 @@ func Run(app App) error {
 					app.OnPause()
 					mobileRuntime.isStopped = true
 					app.OnStop()
-					mobileRuntime.glContext = nil
+					mobileRuntime.context = nil
 				}
 
 			case paint.Event:
