@@ -38,7 +38,8 @@ func (runtime *browserRuntime) GetPlugin(name string) Plugin {
 }
 
 func (runtime *browserRuntime) GetHost() interface{} {
-	return &js.Global()
+	host := js.Global()
+	return &host
 }
 
 func (runtime *browserRuntime) GetRenderer() interface{} {
