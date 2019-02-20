@@ -19,11 +19,6 @@ func init() {
 	runtime.LockOSThread()
 }
 
-type DesktopRuntime interface {
-	Runtime
-	GetWindow() *sdl.Window
-}
-
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
@@ -36,7 +31,9 @@ type desktopRuntime struct {
 }
 
 func (runtime *desktopRuntime) Use(plugin Plugin) {
-	runtime.plugins[plugin.GetName()] = plugin
+	name := plugin.GetName()
+	fmt.Printf("Loading plugin %s\n", name)
+	runtime.plugins[name] = plugin
 	err := plugin.Init(runtime)
 	if err != nil {
 		fmt.Println(err)
@@ -48,7 +45,12 @@ func (runtime *desktopRuntime) GetPlugin(name string) Plugin {
 	return runtime.plugins[name]
 }
 
-func (runtime *desktopRuntime) GetWindow() *sdl.Window {
+func (runtime *desktopRuntime) GetRenderer() interface{} {
+	renderer, _ := runtime.window.GetRenderer()
+	return renderer
+}
+
+func (runtime *desktopRuntime) GetHost() interface{} {
 	return runtime.window
 }
 
@@ -63,8 +65,6 @@ func (runtime *desktopRuntime) Stop() {
 
 // Run main entry point of runtime
 func Run(app App) error {
-	fmt.Println("Run()")
-
 	// -------------------------------------------------------------------- //
 	// Create
 	// -------------------------------------------------------------------- //

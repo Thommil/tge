@@ -20,19 +20,9 @@ class tge << (P,#FF7700) Package >> {
 interface Runtime {
     Use(Plugin)
     GetPlugin(string) []Plugin
+    GetHost() interface{}
+    GetRenderer() interface{}
     Stop()
-}
-
-interface DesktopRuntime {
-    GetWindow() Window
-}
-
-interface MobileRuntime {
-    GetGlContext() GlContext
-}
-
-interface BrowserRuntime {
-    GetGlContext() GlContext
 }
 
 interface Plugin{    
@@ -52,10 +42,6 @@ App <-- Runtime : manage
 App --> Runtime : use
 App --> Plugin : use
 Runtime --> Plugin : manage
-
-DesktopRuntime --|> Runtime
-MobileRuntime --|> Runtime
-BrowserRuntime --|> Runtime
 
 App ..> "tge-gl" : use
 

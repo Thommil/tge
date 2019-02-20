@@ -22,6 +22,8 @@ type App interface {
 type Runtime interface {
 	Use(plugin Plugin)
 	GetPlugin(name string) Plugin
+	GetHost() interface{}
+	GetRenderer() interface{}
 	Stop()
 }
 

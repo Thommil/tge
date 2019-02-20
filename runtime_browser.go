@@ -12,10 +12,6 @@ import (
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
-type BrowserRuntime interface {
-	Runtime
-	GetGlContext() *js.Value
-}
 type browserRuntime struct {
 	app       App
 	plugins   map[string]Plugin
@@ -27,7 +23,9 @@ type browserRuntime struct {
 }
 
 func (runtime *browserRuntime) Use(plugin Plugin) {
-	runtime.plugins[plugin.GetName()] = plugin
+	name := plugin.GetName()
+	fmt.Printf("Loading plugin %s\n", name)
+	runtime.plugins[name] = plugin
 	err := plugin.Init(runtime)
 	if err != nil {
 		fmt.Println(err)
@@ -39,7 +37,11 @@ func (runtime *browserRuntime) GetPlugin(name string) Plugin {
 	return runtime.plugins[name]
 }
 
-func (runtime *browserRuntime) GetGlContext() *js.Value {
+func (runtime *browserRuntime) GetHost() interface{} {
+	return &js.Global()
+}
+
+func (runtime *browserRuntime) GetRenderer() interface{} {
 	glContext := runtime.canvas.Call("getContext", "webgl")
 	if glContext == js.Undefined() {
 		glContext = runtime.canvas.Call("getContext", "experimental-webgl")
@@ -68,8 +70,6 @@ func (runtime *browserRuntime) Stop() {
 
 // Run main entry point of runtime
 func Run(app App) error {
-	fmt.Println("Run()")
-
 	// -------------------------------------------------------------------- //
 	// Create
 	// -------------------------------------------------------------------- //

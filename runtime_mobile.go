@@ -15,12 +15,6 @@ import (
 	gl "golang.org/x/mobile/gl"
 )
 
-type MobileRuntime interface {
-	Runtime
-	GetMobileApp() mobile.App
-	GetGlContext() gl.Context
-}
-
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
@@ -34,7 +28,9 @@ type mobileRuntime struct {
 }
 
 func (runtime *mobileRuntime) Use(plugin Plugin) {
-	runtime.plugins[plugin.GetName()] = plugin
+	name := plugin.GetName()
+	fmt.Printf("Loading plugin %s\n", name)
+	runtime.plugins[name] = plugin
 	err := plugin.Init(runtime)
 	if err != nil {
 		fmt.Println(err)
@@ -44,6 +40,14 @@ func (runtime *mobileRuntime) Use(plugin Plugin) {
 
 func (runtime *mobileRuntime) GetPlugin(name string) Plugin {
 	return runtime.plugins[name]
+}
+
+func (runtime *mobileRuntime) GetRenderer() interface{} {
+	return runtime.glContext
+}
+
+func (runtime *mobileRuntime) GetHost() interface{} {
+	return runtime.mobile
 }
 
 func (runtime *mobileRuntime) Stop() {
@@ -60,8 +64,6 @@ func (runtime mobileRuntime) GetMobileApp() mobile.App {
 
 // Run main entry point of runtime
 func Run(app App) error {
-	fmt.Println("Run()")
-
 	// -------------------------------------------------------------------- //
 	// Create
 	// -------------------------------------------------------------------- //
