@@ -31,19 +31,20 @@ interface Plugin{
     Dispose()
 }
 
-class "tge-gl" << (P,#FF7700) Package >> {
+class "tge-*" << (P,#FF7700) Packages >> {
     GetPlugin() Plugin
 }
 
 ' Relations
-App --> tge : call
+App --> tge : Run(App)
 tge --> Runtime : instanciate
 App <-- Runtime : manage
 App --> Runtime : use
 App --> Plugin : use
 Runtime --> Plugin : manage
-
-App ..> "tge-gl" : use
+Plugin --> Runtime  : use
+"tge-*" --> Plugin : expose
+App ..> "tge-*" : load
 
 @enduml
 ```

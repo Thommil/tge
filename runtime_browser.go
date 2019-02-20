@@ -143,7 +143,7 @@ func Run(app App) error {
 
 	// Resize
 	js.Global().Call("addEventListener", "resize", js.NewCallback(func(args []js.Value) {
-		if !browserRuntime.isStopped {
+		if !browserRuntime.isStopped && !browserRuntime.isPaused {
 			app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
 				browserRuntime.canvas.Get("clientHeight").Int())
 		}

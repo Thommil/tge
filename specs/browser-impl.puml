@@ -3,16 +3,11 @@
 class tge << (P,#FF7700) Package >>
 tge <|-- "syscall.js"
 
-class renderer << (P,#FF7700) Package >>
-renderer <|-- "github.com/goxjs.gl"
+class "tge-gl" << (P,#FF7700) Package >>
+"tge-gl" <|-- "syscall.js"
 
-class ui << (P,#FF7700) Package >>
-ui <|-- "syscall.js"
+interface Renderer
+Renderer <|-- "syscall.js.Value"
 
-class physics << (P,#FF7700) Package >>
-physics <|-- "github.com/jakecoffman.cp"
-
-class player << (P,#FF7700) Package >>
-class ai << (P,#FF7700) Package >>
 @enduml
 ```
