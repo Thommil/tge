@@ -12,7 +12,6 @@ import (
 	paint "golang.org/x/mobile/event/paint"
 	size "golang.org/x/mobile/event/size"
 	touch "golang.org/x/mobile/event/touch"
-	key "golang.org/x/mobile/event/key"
 	gl "golang.org/x/mobile/gl"
 )
 
@@ -20,12 +19,13 @@ import (
 // Runtime implementation
 // -------------------------------------------------------------------- //
 type mobileRuntime struct {
-	app       App
-	plugins   map[string]Plugin
-	host      mobile.App
-	isPaused  bool
-	isStopped bool
-	context   gl.Context
+	app            App
+	plugins        map[string]Plugin
+	host           mobile.App
+	isPaused       bool
+	isStopped      bool
+	context        gl.Context
+	lastMouseEvent MouseEvent
 }
 
 func (runtime *mobileRuntime) Use(plugin Plugin) {
@@ -72,10 +72,11 @@ func Run(app App) error {
 
 	// Instanciate Runtime
 	mobileRuntime := &mobileRuntime{
-		app:       app,
-		plugins:   make(map[string]Plugin),
-		isPaused:  true,
-		isStopped: true,
+		app:            app,
+		plugins:        make(map[string]Plugin),
+		isPaused:       true,
+		isStopped:      true,
+		lastMouseEvent: MouseEvent{},
 	}
 
 	// Unload plugins
@@ -136,7 +137,7 @@ func Run(app App) error {
 
 			case paint.Event:
 				if !mobileRuntime.isPaused {
-					if mobileRuntime.glContext != nil && !e.External {
+					if mobileRuntime.context != nil && !e.External {
 						now := time.Now()
 						app.OnRender(elapsedFpsTime, mutex)
 						a.Publish()
@@ -153,8 +154,47 @@ func Run(app App) error {
 				app.OnResize(e.WidthPx, e.HeightPx)
 
 			case touch.Event:
-				fmt.Println("OnTouch")
-
+				switch e.Type {
+				case touch.TypeBegin:
+					// mouse down
+					if (settings.EventMask & MouseButtonEventEnabled) != 0 {
+						mobileRuntime.lastMouseEvent.X = int32(e.X)
+						mobileRuntime.lastMouseEvent.Y = int32(e.Y)
+						app.OnMouseEvent(
+							MouseEvent{
+								X:      mobileRuntime.lastMouseEvent.X,
+								Y:      mobileRuntime.lastMouseEvent.Y,
+								Type:   TypeDown,
+								Button: ButtonNone,
+							})
+					}
+				case touch.TypeMove:
+					// mouse move
+					if (settings.EventMask & MouseMotionEventEnabled) != 0 {
+						x := int32(e.X)
+						y := int32(e.Y)
+						if (mobileRuntime.lastMouseEvent.X != x) && (mobileRuntime.lastMouseEvent.Y != y) {
+							mobileRuntime.lastMouseEvent = MouseEvent{
+								X:      x,
+								Y:      y,
+								Type:   TypeMove,
+								Button: ButtonNone,
+							}
+							app.OnMouseEvent(mobileRuntime.lastMouseEvent)
+						}
+					}
+				case touch.TypeEnd:
+					// Touch down
+					if (settings.EventMask & MouseButtonEventEnabled) != 0 {
+						app.OnMouseEvent(
+							MouseEvent{
+								X:      int32(e.X),
+								Y:      int32(e.Y),
+								Type:   TypeUp,
+								Button: ButtonNone,
+							})
+					}
+				}
 			}
 
 		}
@@ -162,133 +202,3 @@ func Run(app App) error {
 
 	return nil
 }
-
-// -------------------------------------------------------------------- //
-// KeyMap
-// -------------------------------------------------------------------- //
-
-var keyMap = map[key.Code]KeyCode{
-    key.CodeUnknown Code = 0
-
-    key.CodeA : KeyCodeUnknown,
-	key.CodeB : KeyCodeUnknown,    
-	key.CodeC : KeyCodeUnknown,    
-	key.CodeD : KeyCodeUnknown,    
-	key.CodeE : KeyCodeUnknown,    
-	key.CodeF : KeyCodeUnknown,    
-	key.CodeG : KeyCodeUnknown,
-    key.CodeH : KeyCodeUnknown,
-    key.CodeI : KeyCodeUnknown,
-    key.CodeJ : KeyCodeUnknown,
-    key.CodeK : KeyCodeUnknown,
-    key.CodeL : KeyCodeUnknown,
-    key.CodeM : KeyCodeUnknown,
-    key.CodeN : KeyCodeUnknown,
-    key.CodeO : KeyCodeUnknown,
-    key.CodeP : KeyCodeUnknown,
-    key.CodeQ : KeyCodeUnknown,
-    key.CodeR : KeyCodeUnknown,
-    key.CodeS : KeyCodeUnknown,
-    key.CodeT : KeyCodeUnknown,
-    key.CodeU : KeyCodeUnknown,
-    key.CodeV : KeyCodeUnknown,
-    key.CodeW : KeyCodeUnknown,
-    key.CodeX : KeyCodeUnknown,
-    key.CodeY : KeyCodeUnknown,
-    key.CodeZ : KeyCodeUnknown,
-
-    key.Code1 : KeyCodeUnknown,
-    key.Code2 : KeyCodeUnknown,
-    key.Code3 : KeyCodeUnknown,
-    key.Code4 : KeyCodeUnknown,
-    key.Code5 : KeyCodeUnknown,
-    key.Code6 : KeyCodeUnknown,
-    key.Code7 : KeyCodeUnknown,
-    key.Code8 : KeyCodeUnknown,
-    key.Code9 : KeyCodeUnknown,
-    key.Code0 : KeyCodeUnknown,
-
-    key.CodeReturnEnter        : KeyCodeUnknown,
-    key.CodeEscape             : KeyCodeUnknown,
-    key.CodeDeleteBackspace    : KeyCodeUnknown,
-    key.CodeTab                : KeyCodeUnknown,
-    key.CodeSpacebar           : KeyCodeUnknown,
-    key.CodeHyphenMinus        : KeyCodeUnknown, // -
-    key.CodeEqualSign          : KeyCodeUnknown, // =
-    key.CodeLeftSquareBracket  : KeyCodeUnknown, // [
-    key.CodeRightSquareBracket : KeyCodeUnknown, // ]
-    key.CodeBackslash          : KeyCodeUnknown, // \
-    key.CodeSemicolon          : KeyCodeUnknown, // ;
-    key.CodeApostrophe         : KeyCodeUnknown, // '
-    key.CodeGraveAccent        : KeyCodeUnknown, // `
-    key.CodeComma              : KeyCodeUnknown, // ,
-    key.CodeFullStop           : KeyCodeUnknown, // .
-    key.CodeSlash              : KeyCodeUnknown, // /
-    key.CodeCapsLock           : KeyCodeUnknown,
-
-    key.CodeF1  : KeyCodeUnknown,
-    key.CodeF2  : KeyCodeUnknown,
-    key.CodeF3  : KeyCodeUnknown,
-    key.CodeF4  : KeyCodeUnknown,
-    key.CodeF5  : KeyCodeUnknown,
-    key.CodeF6  : KeyCodeUnknown,
-    key.CodeF7  : KeyCodeUnknown,
-    key.CodeF8  : KeyCodeUnknown,
-    key.CodeF9  : KeyCodeUnknown,
-    key.CodeF10 : KeyCodeUnknown,
-    key.CodeF11 : KeyCodeUnknown,
-    key.CodeF12 : KeyCodeUnknown,
-
-    key.CodePause         : KeyCodeUnknown,
-    key.CodeInsert        : KeyCodeUnknown,
-    key.CodeHome          : KeyCodeUnknown,
-    key.CodePageUp        : KeyCodeUnknown,
-    key.CodeDeleteForward : KeyCodeUnknown,
-    key.CodeEnd           : KeyCodeUnknown,
-    key.CodePageDown      : KeyCodeUnknown,
-
-    key.CodeRightArrow : KeyCodeUnknown,
-    key.CodeLeftArrow  : KeyCodeUnknown,
-    key.CodeDownArrow  : KeyCodeUnknown,
-    key.CodeUpArrow    : KeyCodeUnknown,
-
-    key.CodeKeypadNumLock     : KeyCodeUnknown,
-    key.CodeKeypadSlash       : KeyCodeUnknown, // /
-    key.CodeKeypadAsterisk    : KeyCodeUnknown, // *
-    key.CodeKeypadHyphenMinus : KeyCodeUnknown, // -
-    key.CodeKeypadPlusSign    : KeyCodeUnknown, // +
-    key.CodeKeypadEnter       : KeyCodeUnknown,
-    key.CodeKeypad1           : KeyCodeUnknown,
-    key.CodeKeypad2           : KeyCodeUnknown,
-    key.CodeKeypad3           : KeyCodeUnknown,
-    key.CodeKeypad4           : KeyCodeUnknown,
-    key.CodeKeypad5           : KeyCodeUnknown,
-    key.CodeKeypad6           : KeyCodeUnknown,
-    key.CodeKeypad7           : KeyCodeUnknown,
-    key.CodeKeypad8           : KeyCodeUnknown,
-    key.CodeKeypad9           : KeyCodeUnknown,
-    key.CodeKeypad0           : KeyCodeUnknown,
-    key.CodeKeypadFullStop    : KeyCodeUnknown,  // .
-    key.CodeKeypadEqualSign   : KeyCodeUnknown, // =
-
-    key.CodeHelp : KeyCodeUnknown,
-
-    key.CodeMute       : KeyCodeUnknown,
-    key.CodeVolumeUp   : KeyCodeUnknown,
-    key.CodeVolumeDown : KeyCodeUnknown,
-
-    key.CodeLeftControl  : KeyCodeUnknown,
-    key.CodeLeftShift    : KeyCodeUnknown,
-    key.CodeLeftAlt      : KeyCodeUnknown,
-    key.CodeLeftGUI      : KeyCodeUnknown,
-    key.CodeRightControl : KeyCodeUnknown,
-    key.CodeRightShift   : KeyCodeUnknown,
-    key.CodeRightAlt     : KeyCodeUnknown,
-    key.CodeRightGUI     : KeyCodeUnknown,
-
-    // CodeCompose is the Code for a compose key, sometimes called a multi key,
-    // used to input non-ASCII characters such as ñ being composed of n and ~.
-    //
-    // See https://en.wikipedia.org/wiki/Compose_key
-    key.CodeCompose : KeyCodeUnknown,
-)
