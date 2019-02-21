@@ -6,14 +6,16 @@ type EventMask int
 const (
 	// AllEventsDisable disables all input events on App
 	AllEventsDisable = 0x00
-	// MouseEventEnabled enabled mouse event receiver on App
-	MouseEventEnabled = 0x01
+	// MouseButtonEventEnabled enabled mouse buttons events receiver on App
+	MouseButtonEventEnabled = 0x01
+	// MouseMotionEventEnabled enabled mouse motion events receiver on App
+	MouseMotionEventEnabled = 0x02
 	// ScrollEventEnabled enabled scroll event receiver on App
-	ScrollEventEnabled = 0x02
+	ScrollEventEnabled = 0x04
 	// KeyEventEnabled enabled key event receiver on App
-	KeyEventEnabled = 0x04
+	KeyEventEnabled = 0x08
 	// AllEventsEnabled enables all input events on App
-	AllEventsEnabled = MouseEventEnabled | ScrollEventEnabled | KeyEventEnabled
+	AllEventsEnabled = MouseButtonEventEnabled | MouseMotionEventEnabled | ScrollEventEnabled | KeyEventEnabled
 )
 
 // Settings definition of TGE application
@@ -42,5 +44,5 @@ var defaultSettings = Settings{
 	Height:     480,
 	TPS:        100,
 	FPS:        60,
-	EventMask:  AllEventsEnabled,
+	EventMask:  MouseButtonEventEnabled | ScrollEventEnabled | KeyEventEnabled,
 }

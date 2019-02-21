@@ -178,7 +178,7 @@ func Run(app App) error {
 					app.OnResize(int(w), int(h))
 				}
 			case *sdl.MouseButtonEvent:
-				if (settings.EventMask & MouseEventEnabled) != 0 {
+				if (settings.EventMask & MouseButtonEventEnabled) != 0 {
 					app.OnMouseEvent(
 						MouseEvent{
 							X:      t.X,
@@ -188,7 +188,7 @@ func Run(app App) error {
 						})
 				}
 			case *sdl.MouseMotionEvent:
-				if (settings.EventMask & MouseEventEnabled) != 0 {
+				if (settings.EventMask & MouseMotionEventEnabled) != 0 {
 					app.OnMouseEvent(
 						MouseEvent{
 							X:      t.X,

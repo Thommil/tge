@@ -181,8 +181,8 @@ func Run(app App) error {
 	defer beforeunloadEvtCb.Release()
 	js.Global().Call("addEventListener", "beforeunload", beforeunloadEvtCb)
 
-	// MouseEvent
-	if (settings.EventMask & MouseEventEnabled) != 0 {
+	// MouseButtonEvent
+	if (settings.EventMask & MouseButtonEventEnabled) != 0 {
 		mouseDownEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				app.OnMouseEvent(
@@ -210,7 +210,10 @@ func Run(app App) error {
 		})
 		defer mouseUpEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "mouseup", mouseUpEvtCb)
+	}
 
+	// MouseMotionEventEnabled
+	if (settings.EventMask & MouseMotionEventEnabled) != 0 {
 		mouseMoveEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				app.OnMouseEvent(
