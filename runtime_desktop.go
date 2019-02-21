@@ -210,7 +210,7 @@ func Run(app App) error {
 					app.OnKeyEvent(
 						KeyEvent{
 							Type: Type(t.Type),
-							Key:  sdl.GetKeyName(t.Keysym.Sym),
+							Key:  keyMap[sdl.GetKeyName(t.Keysym.Sym)],
 						})
 				}
 			}
@@ -228,4 +228,12 @@ func Run(app App) error {
 	}
 
 	return nil
+}
+
+// -------------------------------------------------------------------- //
+// KeyMap
+// -------------------------------------------------------------------- //
+
+var keyMap = map[string]string{
+	"A": "A",
 }

@@ -40,7 +40,8 @@ func (runtime *browserRuntime) GetPlugin(name string) Plugin {
 }
 
 func (runtime *browserRuntime) GetHost() interface{} {
-	return &(js.Global())
+	host := js.Global()
+	return &host
 }
 
 func (runtime *browserRuntime) GetRenderer() interface{} {
@@ -143,34 +144,129 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 
 	// Resize
-	js.Global().Call("addEventListener", "resize", js.NewCallback(func(args []js.Value) {
-		if !browserRuntime.isStopped && !browserRuntime.isPaused {
+	resizeEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+		if !browserRuntime.isStopped {
 			app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
 				browserRuntime.canvas.Get("clientHeight").Int())
 		}
-	}))
+	})
+	defer resizeEvtCb.Release()
+	browserRuntime.canvas.Call("addEventListener", "resize", resizeEvtCb)
 
 	// Focus
-	browserRuntime.canvas.Call("addEventListener", "blur", js.NewCallback(func(args []js.Value) {
+	blurEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
 		if !browserRuntime.isStopped && !browserRuntime.isPaused {
 			browserRuntime.isPaused = true
 			browserRuntime.app.OnPause()
 		}
-	}))
+	})
+	defer blurEvtCb.Release()
+	browserRuntime.canvas.Call("addEventListener", "blur", blurEvtCb)
 
-	browserRuntime.canvas.Call("addEventListener", "focus", js.NewCallback(func(args []js.Value) {
+	focuseEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
 		if !browserRuntime.isStopped && browserRuntime.isPaused {
 			browserRuntime.app.OnResume()
 			browserRuntime.isPaused = false
 		}
-	}))
+	})
+	defer focuseEvtCb.Release()
+	browserRuntime.canvas.Call("addEventListener", "focus", focuseEvtCb)
 
 	// Destroy
-	js.Global().Call("addEventListener", "beforeunload", js.NewCallback(func(args []js.Value) {
+	beforeunloadEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
 		if !browserRuntime.isStopped {
 			browserRuntime.Stop()
 		}
-	}))
+	})
+	defer beforeunloadEvtCb.Release()
+	js.Global().Call("addEventListener", "beforeunload", beforeunloadEvtCb)
+
+	// MouseEvent
+	if (settings.EventMask & MouseEventEnabled) != 0 {
+		mouseDownEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				app.OnMouseEvent(
+					MouseEvent{
+						X:      int32(event.Get("offsetX").Int()),
+						Y:      int32(event.Get("offsetY").Int()),
+						Button: Button(event.Get("button").Int() + 1),
+						Type:   TypeDown,
+					})
+			}
+		})
+		defer mouseDownEvtCb.Release()
+		browserRuntime.canvas.Call("addEventListener", "mousedown", mouseDownEvtCb)
+
+		mouseUpEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				app.OnMouseEvent(
+					MouseEvent{
+						X:      int32(event.Get("offsetX").Int()),
+						Y:      int32(event.Get("offsetY").Int()),
+						Button: Button(event.Get("button").Int() + 1),
+						Type:   TypeUp,
+					})
+			}
+		})
+		defer mouseUpEvtCb.Release()
+		browserRuntime.canvas.Call("addEventListener", "mouseup", mouseUpEvtCb)
+
+		mouseMoveEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
+			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				app.OnMouseEvent(
+					MouseEvent{
+						X:      int32(event.Get("offsetX").Int()),
+						Y:      int32(event.Get("offsetY").Int()),
+						Button: ButtonNone,
+						Type:   TypeMove,
+					})
+			}
+		})
+		defer mouseMoveEvtCb.Release()
+		browserRuntime.canvas.Call("addEventListener", "mousemove", mouseMoveEvtCb)
+	}
+
+	// ScrollEvent
+	if (settings.EventMask & ScrollEventEnabled) != 0 {
+		wheelEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
+			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				app.OnScrollEvent(
+					ScrollEvent{
+						X: int32(event.Get("deltaX").Int()),
+						Y: int32(event.Get("deltaY").Int()),
+					})
+			}
+		})
+		defer wheelEvtCb.Release()
+		browserRuntime.canvas.Call("addEventListener", "wheel", wheelEvtCb)
+	}
+
+	// KeyEvent
+	if (settings.EventMask & KeyEventEnabled) != 0 {
+		keyDownEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
+			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				app.OnKeyEvent(
+					KeyEvent{
+						Key:  keyMap[event.Get("key").String()],
+						Type: TypeDown,
+					})
+			}
+		})
+		defer keyDownEvtCb.Release()
+		browserRuntime.canvas.Call("addEventListener", "keydown", keyDownEvtCb)
+
+		keyUpEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
+			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				app.OnKeyEvent(
+					KeyEvent{
+						Key:  keyMap[event.Get("key").String()],
+						Type: TypeUp,
+					})
+			}
+		})
+		defer keyUpEvtCb.Release()
+		browserRuntime.canvas.Call("addEventListener", "keyup", keyUpEvtCb)
+	}
 
 	// -------------------------------------------------------------------- //
 	// Render Loop
@@ -205,4 +301,12 @@ func Run(app App) error {
 	jsTge.Call("stop")
 
 	return nil
+}
+
+// -------------------------------------------------------------------- //
+// KeyMap
+// -------------------------------------------------------------------- //
+
+var keyMap = map[string]string{
+	"A": "A",
 }
