@@ -16,6 +16,7 @@ P1
  * Icons (tge)
  * Resolution change (tge)
  * ZoomEvent (tge)
+ * Init gomobile for IOS only (tge-cli)
   
 P2
  * IOS Support (tge & tgebuild & tge-gl)

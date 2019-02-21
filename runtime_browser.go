@@ -248,10 +248,12 @@ func Run(app App) error {
 	if (settings.EventMask & KeyEventEnabled) != 0 {
 		keyDownEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				keyCode := event.Get("key").String()
 				app.OnKeyEvent(
 					KeyEvent{
-						Key:  keyMap[event.Get("key").String()],
-						Type: TypeDown,
+						Key:   keyMap[keyCode],
+						Value: keyCode,
+						Type:  TypeDown,
 					})
 			}
 		})
@@ -260,10 +262,12 @@ func Run(app App) error {
 
 		keyUpEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				keyCode := event.Get("key").String()
 				app.OnKeyEvent(
 					KeyEvent{
-						Key:  keyMap[event.Get("key").String()],
-						Type: TypeUp,
+						Key:   keyMap[keyCode],
+						Value: keyCode,
+						Type:  TypeUp,
 					})
 			}
 		})
@@ -310,6 +314,137 @@ func Run(app App) error {
 // KeyMap
 // -------------------------------------------------------------------- //
 
-var keyMap = map[string]string{
-	"A": "A",
+var keyMap = map[string]KeyCode{
+
+	// Printable
+	"a": KeyCodeA,
+	"b": KeyCodeB,
+	"c": KeyCodeC,
+	"d": KeyCodeD,
+	"e": KeyCodeE,
+	"f": KeyCodeF,
+	"g": KeyCodeG,
+	"h": KeyCodeH,
+	"i": KeyCodeI,
+	"j": KeyCodeJ,
+	"k": KeyCodeK,
+	"l": KeyCodeL,
+	"m": KeyCodeM,
+	"n": KeyCodeN,
+	"o": KeyCodeO,
+	"p": KeyCodeP,
+	"q": KeyCodeQ,
+	"r": KeyCodeR,
+	"s": KeyCodeS,
+	"t": KeyCodeT,
+	"u": KeyCodeU,
+	"v": KeyCodeV,
+	"w": KeyCodeW,
+	"x": KeyCodeX,
+	"y": KeyCodeY,
+	"z": KeyCodeZ,
+
+	"1": KeyCode1,
+	"2": KeyCode2,
+	"3": KeyCode3,
+	"4": KeyCode4,
+	"5": KeyCode5,
+	"6": KeyCode6,
+	"7": KeyCode7,
+	"8": KeyCode8,
+	"9": KeyCode9,
+	"0": KeyCode0,
+
+	"Enter": KeyCodeReturnEnter,
+	"Tab":   KeyCodeTab,
+	" ":     KeyCodeSpacebar,
+	"-":     KeyCodeHyphenMinus,        // -
+	"=":     KeyCodeEqualSign,          // =
+	"[":     KeyCodeLeftSquareBracket,  // [
+	"]":     KeyCodeRightSquareBracket, // ]
+	"\\":    KeyCodeBackslash,          // \
+	";":     KeyCodeSemicolon,          // ;
+	"'":     KeyCodeApostrophe,         // '
+	"`":     KeyCodeGraveAccent,        // `
+	",":     KeyCodeComma,              // ,
+	".":     KeyCodeFullStop,           // .
+	"/":     KeyCodeSlash,              // /
+
+	"Divide":    KeyCodeKeypadSlash,       // /
+	"Multiply":  KeyCodeKeypadAsterisk,    // *
+	"Substract": KeyCodeKeypadHyphenMinus, // -
+	"Add":       KeyCodeKeypadPlusSign,    // +
+	"Decimal":   KeyCodeKeypadFullStop,    // .
+
+	"@": KeyCodeAt,                // @
+	">": KeyCodeGreaterThan,       // >
+	"<": KeyCodeLesserThan,        // <
+	"$": KeyCodeDollar,            // $
+	":": KeyCodeColon,             // :
+	"(": KeyCodeLeftParenthesis,   // (
+	")": KeyCodeLRightParenthesis, // )
+
+	"&":  KeyCodeAmpersand,   // &
+	"#":  KeyCodeHash,        // #
+	"\"": KeyDoubleQuote,     // "
+	"''": KeyQuote,           // '
+	"§":  KeyParapgrah,       // §
+	"!":  KeyExclamationMark, // !
+	"_":  KeyUnderscore,      // _
+	"?":  KeyQuestionMark,    // ?
+	"%":  KeyPercent,         // %
+	"°":  KeyDegree,          // °
+
+	// Actions
+
+	"Escape":   KeyCodeEscape,
+	"CapsLock": KeyCodeCapsLock,
+
+	"Backspace": KeyCodeDeleteBackspace,
+	"Pause":     KeyCodePause,
+	"Insert":    KeyCodeInsert,
+	"Home":      KeyCodeHome,
+	"PageUp":    KeyCodePageUp,
+	"Delete":    KeyCodeDeleteForward,
+	"End":       KeyCodeEnd,
+	"PageDown":  KeyCodePageDown,
+
+	"ArrowRight": KeyCodeRightArrow,
+	"ArrowLeft":  KeyCodeLeftArrow,
+	"ArrowDown":  KeyCodeDownArrow,
+	"ArrowUp":    KeyCodeUpArrow,
+
+	"Numlock": KeyCodeKeypadNumLock,
+
+	"Help": KeyCodeHelp,
+
+	"AudioVolumeMute": KeyCodeMute,
+	"AudioVolumeUp":   KeyCodeVolumeUp,
+	"AudioVolumeDown": KeyCodeVolumeDown,
+
+	// Functions
+
+	"F1":  KeyCodeF1,
+	"F2":  KeyCodeF2,
+	"F3":  KeyCodeF3,
+	"F4":  KeyCodeF4,
+	"F5":  KeyCodeF5,
+	"F6":  KeyCodeF6,
+	"F7":  KeyCodeF7,
+	"F8":  KeyCodeF8,
+	"F9":  KeyCodeF9,
+	"F10": KeyCodeF10,
+	"F11": KeyCodeF11,
+	"F12": KeyCodeF12,
+
+	// Modifiers
+
+	"Control": KeyCodeLeftControl,
+	"Shift":   KeyCodeLeftShift,
+	"Alt":     KeyCodeLeftAlt,
+	"Meta":    KeyCodeLeftGUI,
+
+	// Compose
+
+	"Compose": KeyCodeCompose,
 }

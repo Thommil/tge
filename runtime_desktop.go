@@ -207,10 +207,12 @@ func Run(app App) error {
 				}
 			case *sdl.KeyboardEvent:
 				if (settings.EventMask & KeyEventEnabled) != 0 {
+					keyCode := sdl.GetKeyName(t.Keysym.Sym)
 					app.OnKeyEvent(
 						KeyEvent{
-							Type: Type(t.Type),
-							Key:  keyMap[sdl.GetKeyName(t.Keysym.Sym)],
+							Type:  Type(t.Type),
+							Key:   keyMap[keyCode],
+							Value: keyCode,
 						})
 				}
 			}
@@ -234,6 +236,158 @@ func Run(app App) error {
 // KeyMap
 // -------------------------------------------------------------------- //
 
-var keyMap = map[string]string{
-	"A": "A",
+var keyMap = map[string]KeyCode{
+
+	// Printable
+	"A": KeyCodeA,
+	"B": KeyCodeB,
+	"C": KeyCodeC,
+	"D": KeyCodeD,
+	"E": KeyCodeE,
+	"F": KeyCodeF,
+	"G": KeyCodeG,
+	"H": KeyCodeH,
+	"I": KeyCodeI,
+	"J": KeyCodeJ,
+	"K": KeyCodeK,
+	"L": KeyCodeL,
+	"M": KeyCodeM,
+	"N": KeyCodeN,
+	"O": KeyCodeO,
+	"P": KeyCodeP,
+	"Q": KeyCodeQ,
+	"R": KeyCodeR,
+	"S": KeyCodeS,
+	"T": KeyCodeT,
+	"U": KeyCodeU,
+	"V": KeyCodeV,
+	"W": KeyCodeW,
+	"X": KeyCodeX,
+	"Y": KeyCodeY,
+	"Z": KeyCodeZ,
+
+	"1": KeyCode1,
+	"2": KeyCode2,
+	"3": KeyCode3,
+	"4": KeyCode4,
+	"5": KeyCode5,
+	"6": KeyCode6,
+	"7": KeyCode7,
+	"8": KeyCode8,
+	"9": KeyCode9,
+	"0": KeyCode0,
+
+	"Return": KeyCodeReturnEnter,
+	"Tab":    KeyCodeTab,
+	"Space":  KeyCodeSpacebar,
+	"-":      KeyCodeHyphenMinus,        // -
+	"=":      KeyCodeEqualSign,          // =
+	"[":      KeyCodeLeftSquareBracket,  // [
+	"]":      KeyCodeRightSquareBracket, // ]
+	"\\":     KeyCodeBackslash,          // \
+	";":      KeyCodeSemicolon,          // ;
+	"'":      KeyCodeApostrophe,         // '
+	"`":      KeyCodeGraveAccent,        // `
+	",":      KeyCodeComma,              // ,
+	".":      KeyCodeFullStop,           // .
+	"/":      KeyCodeSlash,              // /
+
+	"Keypad /":     KeyCodeKeypadSlash,       // /
+	"Keypad *":     KeyCodeKeypadAsterisk,    // *
+	"Keypad -":     KeyCodeKeypadHyphenMinus, // -
+	"Keypad +":     KeyCodeKeypadPlusSign,    // +
+	"Keypad Enter": KeyCodeKeypadEnter,
+	"Keypad 1":     KeyCodeKeypad1,
+	"Keypad 2":     KeyCodeKeypad2,
+	"Keypad 3":     KeyCodeKeypad3,
+	"Keypad 4":     KeyCodeKeypad4,
+	"Keypad 5":     KeyCodeKeypad5,
+	"Keypad 6":     KeyCodeKeypad6,
+	"Keypad 7":     KeyCodeKeypad7,
+	"Keypad 8":     KeyCodeKeypad8,
+	"Keypad 9":     KeyCodeKeypad9,
+	"Keypad 0":     KeyCodeKeypad0,
+	"Keypad .":     KeyCodeKeypadFullStop,  // .
+	"Keypad =":     KeyCodeKeypadEqualSign, // =
+
+	"@": KeyCodeAt,                // @
+	">": KeyCodeGreaterThan,       // >
+	"<": KeyCodeLesserThan,        // <
+	"$": KeyCodeDollar,            // $
+	":": KeyCodeColon,             // :
+	"(": KeyCodeLeftParenthesis,   // (
+	")": KeyCodeLRightParenthesis, // )
+
+	"&":  KeyCodeAmpersand,   // &
+	"#":  KeyCodeHash,        // #
+	"\"": KeyDoubleQuote,     // "
+	"''": KeyQuote,           // '
+	"§":  KeyParapgrah,       // §
+	"!":  KeyExclamationMark, // !
+	"_":  KeyUnderscore,      // _
+	"?":  KeyQuestionMark,    // ?
+	"%":  KeyPercent,         // %
+	"°":  KeyDegree,          // °
+
+	// Actions
+
+	"Escape":   KeyCodeEscape,
+	"CapsLock": KeyCodeCapsLock,
+
+	"Backspace": KeyCodeDeleteBackspace,
+	"Pause":     KeyCodePause,
+	"Insert":    KeyCodeInsert,
+	"Home":      KeyCodeHome,
+	"PageUp":    KeyCodePageUp,
+	"Delete":    KeyCodeDeleteForward,
+	"End":       KeyCodeEnd,
+	"PageDown":  KeyCodePageDown,
+
+	"Right": KeyCodeRightArrow,
+	"Left":  KeyCodeLeftArrow,
+	"Down":  KeyCodeDownArrow,
+	"Up":    KeyCodeUpArrow,
+
+	"Numlock": KeyCodeKeypadNumLock,
+
+	"Help": KeyCodeHelp,
+
+	"AudioMute":  KeyCodeMute,
+	"Mute":       KeyCodeMute,
+	"VolumeUp":   KeyCodeVolumeUp,
+	"VolumeDown": KeyCodeVolumeDown,
+
+	// Functions
+
+	"F1":  KeyCodeF1,
+	"F2":  KeyCodeF2,
+	"F3":  KeyCodeF3,
+	"F4":  KeyCodeF4,
+	"F5":  KeyCodeF5,
+	"F6":  KeyCodeF6,
+	"F7":  KeyCodeF7,
+	"F8":  KeyCodeF8,
+	"F9":  KeyCodeF9,
+	"F10": KeyCodeF10,
+	"F11": KeyCodeF11,
+	"F12": KeyCodeF12,
+
+	// Modifiers
+
+	"Left Ctrl":     KeyCodeLeftControl,
+	"Left Shift":    KeyCodeLeftShift,
+	"Left Alt":      KeyCodeLeftAlt,
+	"Left Option":   KeyCodeLeftAlt,
+	"Left GUI":      KeyCodeLeftGUI,
+	"Left Command":  KeyCodeLeftGUI,
+	"Right Ctrl":    KeyCodeRightControl,
+	"Right Shift":   KeyCodeRightShift,
+	"Right Alt":     KeyCodeRightAlt,
+	"Right Option":  KeyCodeLeftAlt,
+	"Right GUI":     KeyCodeRightGUI,
+	"Right Command": KeyCodeLeftGUI,
+
+	// Compose
+
+	//"": KeyCodeCompose,
 }
