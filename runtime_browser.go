@@ -211,7 +211,7 @@ func Run(app App) error {
 		defer mouseUpEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "mouseup", mouseUpEvtCb)
 
-		mouseMoveEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
+		mouseMoveEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				app.OnMouseEvent(
 					MouseEvent{

@@ -35,6 +35,7 @@
         init() {
             canvasEl.classList.remove('stop');
             canvasEl.classList.add('start');
+            canvasEl.oncontextmenu = function (e) {e.preventDefault();};
             canvasEl.focus()
             return canvasEl;
         },
