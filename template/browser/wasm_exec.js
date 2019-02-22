@@ -2,58 +2,35 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// !!! If edited, don't forget to replace it in dedicated part of tge-min.js (WASM part in built version) !!!
+
 (() => {
-	// Map web browser API and Node.js API to a single common API (preferring web standards over Node.js API).
-	const isNodeJS = typeof process !== "undefined";
-	if (isNodeJS) {
-		global.require = require;
-		global.fs = require("fs");
-
-		const nodeCrypto = require("crypto");
-		global.crypto = {
-			getRandomValues(b) {
-				nodeCrypto.randomFillSync(b);
-			},
-		};
-
-		global.performance = {
-			now() {
-				const [sec, nsec] = process.hrtime();
-				return sec * 1000 + nsec / 1000000;
-			},
-		};
-
-		const util = require("util");
-		global.TextEncoder = util.TextEncoder;
-		global.TextDecoder = util.TextDecoder;
+	if (typeof window !== "undefined") {
+		window.global = window;
+	} else if (typeof self !== "undefined") {
+		self.global = self;
 	} else {
-		if (typeof window !== "undefined") {
-			window.global = window;
-		} else if (typeof self !== "undefined") {
-			self.global = self;
-		} else {
-			throw new Error("cannot export Go (neither window nor self is defined)");
-		}
-
-		let outputBuf = "";
-		global.fs = {
-			constants: { O_WRONLY: -1, O_RDWR: -1, O_CREAT: -1, O_TRUNC: -1, O_APPEND: -1, O_EXCL: -1 }, // unused
-			writeSync(fd, buf) {
-				outputBuf += decoder.decode(buf);
-				const nl = outputBuf.lastIndexOf("\n");
-				if (nl != -1) {
-					console.log(outputBuf.substr(0, nl));
-					outputBuf = outputBuf.substr(nl + 1);
-				}
-				return buf.length;
-			},
-			openSync(path, flags, mode) {
-				const err = new Error("not implemented");
-				err.code = "ENOSYS";
-				throw err;
-			},
-		};
+		throw new Error("cannot export Go (neither window nor self is defined)");
 	}
+
+	let outputBuf = "";
+	global.fs = {
+		constants: { O_WRONLY: -1, O_RDWR: -1, O_CREAT: -1, O_TRUNC: -1, O_APPEND: -1, O_EXCL: -1 }, // unused
+		writeSync(fd, buf) {
+			outputBuf += decoder.decode(buf);
+			const nl = outputBuf.lastIndexOf("\n");
+			if (nl != -1) {
+				console.log(outputBuf.substr(0, nl));
+				outputBuf = outputBuf.substr(nl + 1);
+			}
+			return buf.length;
+		},
+		openSync(path, flags, mode) {
+			const err = new Error("not implemented");
+			err.code = "ENOSYS";
+			throw err;
+		},
+	};
 
 	const encoder = new TextEncoder("utf-8");
 	const decoder = new TextDecoder("utf-8");
@@ -409,29 +386,5 @@
 				fn(event);
 			};
 		}
-	}
-
-	if (isNodeJS) {
-		if (process.argv.length < 3) {
-			process.stderr.write("usage: go_js_wasm_exec [wasm binary] [arguments]\n");
-			process.exit(1);
-		}
-
-		const go = new Go();
-		go.argv = process.argv.slice(2);
-		go.env = process.env;
-		go.exit = process.exit;
-		WebAssembly.instantiate(fs.readFileSync(process.argv[2]), go.importObject).then((result) => {
-			process.on("exit", (code) => { // Node.js exits if no callback is pending
-				if (code === 0 && !go.exited) {
-					// deadlock, make Go print error and stack traces
-					go._callbackShutdown = true;
-					go._inst.exports.run();
-				}
-			});
-			return go.run(result.instance);
-		}).catch((err) => {
-			throw err;
-		});
 	}
 })();

@@ -1,4 +1,3 @@
-// TGE Tooling JS
 (() => {
     if (typeof window !== 'undefined') {
         window.global = window;
@@ -14,7 +13,17 @@
         throw new Error('Canvas element not found (must be #canvas)');
     }
 
+    let assetsMap = {}
+
     global.tge = {
+        init() {
+            canvasEl.classList.remove('stop');
+            canvasEl.classList.add('start');
+            canvasEl.oncontextmenu = function (e) {e.preventDefault();};
+            canvasEl.focus()
+            return canvasEl;
+        },
+
         setFullscreen(enabled) {
             if (enabled) {
                 canvasEl.classList.add('fullscreen');
@@ -32,12 +41,35 @@
             canvasEl.setAttribute('height', canvasEl.clientHeight);
         },
 
-        init() {
-            canvasEl.classList.remove('stop');
-            canvasEl.classList.add('start');
-            canvasEl.oncontextmenu = function (e) {e.preventDefault();};
-            canvasEl.focus()
-            return canvasEl;
+        getAssetSize(path, callback) {            
+            fetch('./assets/' + path).then((response) => {
+                if(response.ok) {                    
+                    return response.arrayBuffer()           
+                } else {
+                    throw new Error(response.statusText)
+                }
+            })
+            .then((content) => {
+                if (content) {
+                    assetsMap[path] = new Uint8Array(content)                    
+                } else {
+                    throw new Error("empty content") 
+                }
+                callback(content.byteLength, null)
+            })
+            .catch((error) => {
+                callback(null, error)
+            });
+        },
+
+        loadAsset(path, goData, callback) {
+            if (assetsMap[path]) {
+                goData.set(assetsMap[path])
+                callback(null)
+            } else {
+                callback("empty content")
+            }
+            delete assetsMap[path]
         },
 
         stop() {
@@ -56,7 +88,7 @@
             WebAssembly.instantiateStreaming(fetch("main.wasm"), window.go.importObject).then((result) => {
                 window.go.run(result.instance);
             }).catch(err=>{
-                showError.showError(err)
+                tge.showError(err)
             });
         } else {
             fetch('main.wasm').then(response =>
@@ -66,7 +98,7 @@
               ).then(result => {
                 window.go.run(result.instance);
             }).catch(err=>{
-                showError.showError(err)
+                tge.showError(err)
             });
         }
     }

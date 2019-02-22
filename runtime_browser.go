@@ -17,6 +17,7 @@ type browserRuntime struct {
 	plugins   map[string]Plugin
 	ticker    *time.Ticker
 	canvas    *js.Value
+	jsTge     *js.Value
 	isPaused  bool
 	isStopped bool
 	done      chan bool
@@ -55,6 +56,44 @@ func (runtime *browserRuntime) GetRenderer() interface{} {
 		panic(err)
 	}
 	return &glContext
+}
+
+func (runtime *browserRuntime) LoadAsset(p string) ([]byte, error) {
+	var data []byte
+	var err error
+	var doneState = make(chan bool)
+
+	onLoadAssetCallback := js.NewCallback(func(args []js.Value) {
+		if args[0] != js.Null() {
+			err = fmt.Errorf(args[1].String())
+			doneState <- false
+		} else {
+			doneState <- true
+		}
+	})
+
+	onGetAssetSizeCallback := js.NewCallback(func(args []js.Value) {
+		if args[1] != js.Null() {
+			err = fmt.Errorf(args[1].String())
+			doneState <- false
+		} else if size := args[0].Int(); size > 0 {
+			data = make([]byte, size)
+			jsData := js.TypedArrayOf(data)
+			defer jsData.Release()
+			runtime.jsTge.Call("loadAsset", p, jsData, onLoadAssetCallback)
+		} else {
+			err = fmt.Errorf("empty asset")
+			doneState <- false
+		}
+	})
+	defer onLoadAssetCallback.Release()
+	defer onGetAssetSizeCallback.Release()
+
+	runtime.jsTge.Call("getAssetSize", p, onGetAssetSizeCallback)
+
+	<-doneState
+
+	return data, err
 }
 
 func (runtime *browserRuntime) Stop() {
@@ -103,6 +142,7 @@ func Run(app App) error {
 		isStopped: true,
 		canvas:    &canvas,
 		done:      make(chan bool),
+		jsTge:     &jsTge,
 	}
 
 	// Start App
@@ -165,8 +205,11 @@ func Run(app App) error {
 
 	focuseEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
 		if !browserRuntime.isStopped && browserRuntime.isPaused {
-			browserRuntime.app.OnResume()
-			browserRuntime.isPaused = false
+			//Called in go routine in case of asset loading in resume (blocking)
+			go func() {
+				browserRuntime.app.OnResume()
+				browserRuntime.isPaused = false
+			}()
 		}
 	})
 	defer focuseEvtCb.Release()
@@ -306,6 +349,9 @@ func Run(app App) error {
 
 	renderFrame.Release()
 	jsTge.Call("stop")
+
+	noExit := make(chan int)
+	<-noExit
 
 	return nil
 }
