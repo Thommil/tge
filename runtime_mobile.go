@@ -4,10 +4,12 @@ package tge
 
 import (
 	fmt "fmt"
+	"io/ioutil"
 	sync "sync"
 	time "time"
 
 	mobile "golang.org/x/mobile/app"
+	asset "golang.org/x/mobile/asset"
 	lifecycle "golang.org/x/mobile/event/lifecycle"
 	paint "golang.org/x/mobile/event/paint"
 	size "golang.org/x/mobile/event/size"
@@ -51,6 +53,14 @@ func (runtime *mobileRuntime) GetRenderer() interface{} {
 
 func (runtime *mobileRuntime) GetHost() interface{} {
 	return runtime.host
+}
+
+func (runtime *mobileRuntime) LoadAsset(p string) ([]byte, error) {
+	if file, err := asset.Open(p); err != nil {
+		return nil, err
+	} else {
+		return ioutil.ReadAll(file)
+	}
 }
 
 func (runtime *mobileRuntime) Stop() {

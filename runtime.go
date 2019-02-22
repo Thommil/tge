@@ -27,6 +27,7 @@ type Runtime interface {
 	GetPlugin(name string) Plugin
 	GetHost() interface{}
 	GetRenderer() interface{}
+	LoadAsset(path string) ([]byte, error)
 	Stop()
 }
 

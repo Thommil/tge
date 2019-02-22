@@ -7,6 +7,10 @@ package tge
 
 import (
 	fmt "fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"path/filepath"
 	runtime "runtime"
 	sync "sync"
 	time "time"
@@ -23,12 +27,13 @@ func init() {
 // Runtime implementation
 // -------------------------------------------------------------------- //
 type desktopRuntime struct {
-	app       App
-	plugins   map[string]Plugin
-	host      *sdl.Window
-	context   *sdl.GLContext
-	isPaused  bool
-	isStopped bool
+	app        App
+	plugins    map[string]Plugin
+	host       *sdl.Window
+	context    *sdl.GLContext
+	isPaused   bool
+	isStopped  bool
+	assetsPath string
 }
 
 func (runtime *desktopRuntime) Use(plugin Plugin) {
@@ -54,6 +59,10 @@ func (runtime *desktopRuntime) GetRenderer() interface{} {
 
 func (runtime *desktopRuntime) GetHost() interface{} {
 	return runtime.host
+}
+
+func (runtime *desktopRuntime) LoadAsset(p string) ([]byte, error) {
+	return ioutil.ReadFile(path.Join(runtime.assetsPath, p))
 }
 
 func (runtime *desktopRuntime) Stop() {
@@ -114,6 +123,28 @@ func Run(app App) error {
 		context:   &context,
 		isPaused:  true,
 		isStopped: true,
+	}
+
+	// Eval assets path
+	if p, err := os.Executable(); err != nil {
+		panic(err)
+	} else {
+		if p, err = filepath.EvalSymlinks(p); err != nil {
+			panic(err)
+		}
+		if runtime.GOOS == "darwin" {
+			// Packed mode (DIST for darwin)
+			desktopRuntime.assetsPath = path.Join(path.Dir(p), "../Resources")
+		} else {
+			// Unpacked mode (DIST for windows/linux)
+			desktopRuntime.assetsPath = path.Join(path.Dir(p), "assets")
+		}
+
+		if _, err := os.Stat(desktopRuntime.assetsPath); os.IsNotExist(err) {
+			// Unpacked mode (DEV for all)
+			desktopRuntime.assetsPath = path.Join(path.Dir(p), "../../assets")
+		}
+
 	}
 
 	// Unload plugins

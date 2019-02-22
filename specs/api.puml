@@ -25,6 +25,7 @@ interface Runtime {
     GetPlugin(string) []Plugin
     GetHost() interface{}
     GetRenderer() interface{}
+    LoadAsset(string) []byte, error
     Stop()
 }
 

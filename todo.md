@@ -1,8 +1,10 @@
 # TODO
 P0
 * Assets support (tge & tge-examples)
+* Write/DB support (tge & tge-examples)
 * Network Support (tge & tge-examples)
 * Icons (tge)
+* DEV/logs mode (tge-cli)
 
 P1
 * Nuklear (tge-nuklear)
