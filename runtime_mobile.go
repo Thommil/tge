@@ -4,17 +4,17 @@ package tge
 
 import (
 	fmt "fmt"
-	"io/ioutil"
+	ioutil "io/ioutil"
 	sync "sync"
 	time "time"
 
-	mobile "github.com/thommil/mobile/app"
-	asset "github.com/thommil/mobile/asset"
-	lifecycle "github.com/thommil/mobile/event/lifecycle"
-	paint "github.com/thommil/mobile/event/paint"
-	size "github.com/thommil/mobile/event/size"
-	touch "github.com/thommil/mobile/event/touch"
-	gl "github.com/thommil/mobile/gl"
+	mobile "github.com/thommil/tge-mobile/app"
+	asset "github.com/thommil/tge-mobile/asset"
+	lifecycle "github.com/thommil/tge-mobile/event/lifecycle"
+	paint "github.com/thommil/tge-mobile/event/paint"
+	size "github.com/thommil/tge-mobile/event/size"
+	touch "github.com/thommil/tge-mobile/event/touch"
+	gl "github.com/thommil/tge-mobile/gl"
 )
 
 // -------------------------------------------------------------------- //
