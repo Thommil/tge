@@ -65,11 +65,11 @@
         loadAsset(path, goData, callback) {
             if (assetsMap[path]) {
                 goData.set(assetsMap[path])
+                delete assetsMap[path]
                 callback(null)
             } else {
                 callback("empty content")
             }
-            delete assetsMap[path]
         },
 
         stop() {

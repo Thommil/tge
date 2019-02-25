@@ -1,13 +1,11 @@
 # TODO
 P0
-* Assets support (tge & tge-examples)
-* Write/DB support (tge & tge-examples)
-* Network Support (tge & tge-examples)
+* Nuklear (tge-nuklear)
 * Icons (tge)
-* DEV/logs mode (tge-cli)
 
 P1
-* Nuklear (tge-nuklear)
+* Write/DB support (tge & tge-examples)
+* Network Support (tge & tge-examples)
 * AL (tge-al)
 * Box2D (tge-box2d)
 * Chipmunk (tge-chipmunk)
@@ -17,6 +15,7 @@ P1
 * GoDoc (all)
 * Resolution change (tge)
 * IOS Support (tge & tgebuild & tge-gl)
+* Licence
 
 P2
 * Virtual Keyboard for Android (tge)

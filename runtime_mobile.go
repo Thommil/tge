@@ -8,13 +8,13 @@ import (
 	sync "sync"
 	time "time"
 
-	mobile "golang.org/x/mobile/app"
-	asset "golang.org/x/mobile/asset"
-	lifecycle "golang.org/x/mobile/event/lifecycle"
-	paint "golang.org/x/mobile/event/paint"
-	size "golang.org/x/mobile/event/size"
-	touch "golang.org/x/mobile/event/touch"
-	gl "golang.org/x/mobile/gl"
+	mobile "github.com/thommil/mobile/app"
+	asset "github.com/thommil/mobile/asset"
+	lifecycle "github.com/thommil/mobile/event/lifecycle"
+	paint "github.com/thommil/mobile/event/paint"
+	size "github.com/thommil/mobile/event/size"
+	touch "github.com/thommil/mobile/event/touch"
+	gl "github.com/thommil/mobile/gl"
 )
 
 // -------------------------------------------------------------------- //
