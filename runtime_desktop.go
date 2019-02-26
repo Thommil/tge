@@ -101,6 +101,10 @@ func Run(app App) error {
 		windowFlags = windowFlags | sdl.WINDOW_FULLSCREEN_DESKTOP
 	}
 
+	if runtime.GOOS == "darwin" {
+		sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
+	}
+
 	// Window creation
 	window, err := sdl.CreateWindow(settings.Name, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
 		int32(settings.Width), int32(settings.Height), uint32(windowFlags))
