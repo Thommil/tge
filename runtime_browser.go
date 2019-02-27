@@ -46,8 +46,13 @@ func (runtime *browserRuntime) GetHost() interface{} {
 }
 
 func (runtime *browserRuntime) GetRenderer() interface{} {
-	glContext := runtime.canvas.Call("getContext", "webgl")
+	glContext := runtime.canvas.Call("getContext", "webgl2")
 	if glContext == js.Undefined() {
+		fmt.Println("WARNING: No WebGL2 support")
+		glContext = runtime.canvas.Call("getContext", "webgl")
+	}
+	if glContext == js.Undefined() {
+		fmt.Println("WARNING: No WebGL support")
 		glContext = runtime.canvas.Call("getContext", "experimental-webgl")
 	}
 	if glContext == js.Undefined() {
@@ -191,7 +196,7 @@ func Run(app App) error {
 		}
 	})
 	defer resizeEvtCb.Release()
-	browserRuntime.canvas.Call("addEventListener", "resize", resizeEvtCb)
+	js.Global().Call("addEventListener", "resize", resizeEvtCb)
 
 	// Focus
 	blurEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
@@ -279,7 +284,7 @@ func Run(app App) error {
 				app.OnScrollEvent(
 					ScrollEvent{
 						X: int32(event.Get("deltaX").Int()),
-						Y: int32(event.Get("deltaY").Int()),
+						Y: -int32(event.Get("deltaY").Int()),
 					})
 			}
 		})
@@ -322,20 +327,15 @@ func Run(app App) error {
 	// Render Loop
 	// -------------------------------------------------------------------- //
 	var renderFrame js.Callback
-	fpsDelay := time.Duration(1000000000 / settings.FPS)
 	elapsedFpsTime := time.Duration(0)
 
 	renderFrame = js.NewCallback(func(args []js.Value) {
 		if !browserRuntime.isPaused {
 			now := time.Now()
 			app.OnRender(elapsedFpsTime, mutex)
-			elapsedFpsTime = fpsDelay - time.Since(now)
-			if elapsedFpsTime < 0 {
-				elapsedFpsTime = 0
-			}
-			time.Sleep(elapsedFpsTime)
+			elapsedFpsTime = time.Since(now)
 		} else {
-			time.Sleep(fpsDelay)
+			time.Sleep(time.Millisecond * 10)
 		}
 		if !browserRuntime.isStopped {
 			js.Global().Call("requestAnimationFrame", renderFrame)

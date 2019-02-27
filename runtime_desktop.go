@@ -189,7 +189,6 @@ func Run(app App) error {
 	// Render Loop
 	// -------------------------------------------------------------------- //
 	var resizeAtStart sync.Once
-	fpsDelay := time.Duration(1000000000 / settings.FPS)
 	elapsedFpsTime := time.Duration(0)
 	for !desktopRuntime.isStopped {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
@@ -256,11 +255,7 @@ func Run(app App) error {
 			now := time.Now()
 			app.OnRender(elapsedFpsTime, mutex)
 			window.GLSwap()
-			elapsedFpsTime = fpsDelay - time.Since(now)
-			if elapsedFpsTime < 0 {
-				elapsedFpsTime = 0
-			}
-			time.Sleep(elapsedFpsTime)
+			elapsedFpsTime = time.Since(now)
 		}
 	}
 

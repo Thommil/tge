@@ -121,7 +121,6 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Init
 	// -------------------------------------------------------------------- //
-	fpsDelay := time.Duration(1000000000 / settings.FPS)
 	elapsedFpsTime := time.Duration(0)
 	mobile.Main(func(a mobile.App) {
 		for e := range a.Events() {
@@ -151,11 +150,7 @@ func Run(app App) error {
 						now := time.Now()
 						app.OnRender(elapsedFpsTime, mutex)
 						a.Publish()
-						elapsedFpsTime = fpsDelay - time.Since(now)
-						if elapsedFpsTime < 0 {
-							elapsedFpsTime = 0
-						}
-						time.Sleep(elapsedFpsTime)
+						elapsedFpsTime = time.Since(now)
 					}
 					a.Send(paint.Event{})
 				}
