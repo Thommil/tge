@@ -1,67 +1,25 @@
 # TGE - Game Runtime in GO
-**TGE** aims to provide a light, portable and almsot unopiniated runtime to integrate your favorite GO libraries (at least mine).
+**TGE** aims to provide a light, portable and almsot unopiniated runtime to integrate your favorite GO libraries (at least mines).
 
-**TGE Core** implements a minimal runtime for several platforms:
+## TGE Core 
+Core implements a minimal runtime for several platforms:
   * Windows, MacOS & Linux
   * Android 5+ & IOS 8+
   * Web on Chrome, Firefox & Safari
 
+For diagrams lovers, here's the main architecture:
+
+![Core Architecture](https://raw.githubusercontent.com/thommil/tge/master/specs/api.png)
+
+## TGE plugins
+Plugins then allow to create your App by choosing implementation of different parts (GUI, rendering, sound, physics ...). If a library needs a custom implementation to run on each target, I try to create the associated plugin, if not, just import it by yourself. This way, **you choose** how to create your game/application. 
+
+Currently available plugins :
+ * [tge-gl](https://github.com/thommil/tge-gl) : OpenGL/ES 3+ API 
+ * [tge-g3n](https://github.com/thommil/tge-g3n) : Port of the awesome [G3N](https://github.com/g3n/engine) Game Engine
 
 
-```plantuml
-@startuml API
-' Components
-interface App {
-    OnCreate(Settings) error
-    OnStart(Runtime) error
-    OnResize(int, int)
-    OnResume()
-    OnRender(Duration, Mutex)
-    OnTick(Duration, Mutex)
-    OnMouseEvent(MouseEvent)
-    OnScrollEvent(ScrollEvent)
-    OnKeyEvent(KeyEvent)
-    OnPause()
-    OnStop()
-    OnDispose()
-}
 
-class tge << (P,#FF7700) Package >> {
-    {static} Run(App)
-}
-
-interface Runtime {
-    Use(Plugin)
-    GetPlugin(string) []Plugin
-    GetHost() interface{}
-    GetRenderer() interface{}
-    LoadAsset(string) []byte, error
-    Stop()
-}
-
-interface Plugin{    
-    Init(Runtime) error
-    GetName() string
-    Dispose()
-}
-
-class "tge-*" << (P,#FF7700) Packages >> {
-    GetPlugin() Plugin
-}
-
-' Relations
-App --> tge : Run(App)
-tge --> Runtime : instanciate
-App <-- Runtime : manage
-App --> Runtime : use
-App --> Plugin : use
-Runtime --> Plugin : manage
-Plugin --> Runtime  : use
-"tge-*" --> Plugin : expose
-App ..> "tge-*" : load
-
-@enduml
-```
 
 # Getting started
 Based on
