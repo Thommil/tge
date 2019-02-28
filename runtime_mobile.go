@@ -126,7 +126,7 @@ func Run(app App) error {
 	elapsedFpsTime := time.Duration(0)
 	mobile.Main(func(a mobile.App) {
 		for e := range a.Events() {
-			switch e := a.Filter(e).(type) {
+			switch e := a.(type) {
 			case lifecycle.Event:
 				switch e.To {
 				case lifecycle.StageFocused:
