@@ -155,7 +155,11 @@ func Run(app App) error {
 	}
 
 	// Start App
-	app.OnStart(browserRuntime)
+	err = app.OnStart(browserRuntime)
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
 	browserRuntime.isStopped = false
 
 	// Resume App

@@ -165,7 +165,11 @@ func Run(app App) error {
 	defer sdl.GLDeleteContext(context)
 
 	// Start App
-	app.OnStart(desktopRuntime)
+	err = app.OnStart(desktopRuntime)
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
 	desktopRuntime.isStopped = false
 
 	// -------------------------------------------------------------------- //

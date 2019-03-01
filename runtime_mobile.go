@@ -126,13 +126,17 @@ func Run(app App) error {
 	elapsedFpsTime := time.Duration(0)
 	mobile.Main(func(a mobile.App) {
 		for e := range a.Events() {
-			switch e := a.(type) {
+			switch e := a.Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.To {
 				case lifecycle.StageFocused:
 					mobileRuntime.context, _ = e.DrawContext.(gl.Context)
 					mobileRuntime.host = a
-					app.OnStart(mobileRuntime)
+					err := app.OnStart(mobileRuntime)
+					if err != nil {
+						fmt.Println(err)
+						panic(err)
+					}
 					mobileRuntime.isStopped = false
 					go startTicker()
 					app.OnResume()
