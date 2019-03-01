@@ -70,16 +70,17 @@ func (runtime *browserRuntime) LoadAsset(p string) ([]byte, error) {
 	var err error
 	var doneState = make(chan bool)
 
-	onLoadAssetCallback := js.NewCallback(func(args []js.Value) {
+	onLoadAssetCallback := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if args[0] != js.Null() {
 			err = fmt.Errorf(args[1].String())
 			doneState <- false
 		} else {
 			doneState <- true
 		}
+		return false
 	})
 
-	onGetAssetSizeCallback := js.NewCallback(func(args []js.Value) {
+	onGetAssetSizeCallback := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if args[1] != js.Null() {
 			err = fmt.Errorf(args[1].String())
 			doneState <- false
@@ -92,6 +93,7 @@ func (runtime *browserRuntime) LoadAsset(p string) ([]byte, error) {
 			err = fmt.Errorf("empty asset")
 			doneState <- false
 		}
+		return false
 	})
 	defer onLoadAssetCallback.Release()
 	defer onGetAssetSizeCallback.Release()
@@ -191,26 +193,28 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 
 	// Resize
-	resizeEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+	resizeEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if !browserRuntime.isStopped {
 			app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
 				browserRuntime.canvas.Get("clientHeight").Int())
 		}
+		return false
 	})
 	defer resizeEvtCb.Release()
 	js.Global().Call("addEventListener", "resize", resizeEvtCb)
 
 	// Focus
-	blurEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+	blurEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if !browserRuntime.isStopped && !browserRuntime.isPaused {
 			browserRuntime.isPaused = true
 			browserRuntime.app.OnPause()
 		}
+		return false
 	})
 	defer blurEvtCb.Release()
 	browserRuntime.canvas.Call("addEventListener", "blur", blurEvtCb)
 
-	focuseEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+	focuseEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if !browserRuntime.isStopped && browserRuntime.isPaused {
 			//Called in go routine in case of asset loading in resume (blocking)
 			go func() {
@@ -218,23 +222,26 @@ func Run(app App) error {
 				browserRuntime.isPaused = false
 			}()
 		}
+		return false
 	})
 	defer focuseEvtCb.Release()
 	browserRuntime.canvas.Call("addEventListener", "focus", focuseEvtCb)
 
 	// Destroy
-	beforeunloadEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+	beforeunloadEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if !browserRuntime.isStopped {
 			browserRuntime.Stop()
 		}
+		return false
 	})
 	defer beforeunloadEvtCb.Release()
 	js.Global().Call("addEventListener", "beforeunload", beforeunloadEvtCb)
 
 	// MouseButtonEvent
 	if (settings.EventMask & MouseButtonEventEnabled) != 0 {
-		mouseDownEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+		mouseDownEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				event := args[0]
 				app.OnMouseEvent(
 					MouseEvent{
 						X:      int32(event.Get("offsetX").Int()),
@@ -243,12 +250,14 @@ func Run(app App) error {
 						Type:   TypeDown,
 					})
 			}
+			return false
 		})
 		defer mouseDownEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "mousedown", mouseDownEvtCb)
 
-		mouseUpEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+		mouseUpEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				event := args[0]
 				app.OnMouseEvent(
 					MouseEvent{
 						X:      int32(event.Get("offsetX").Int()),
@@ -257,6 +266,7 @@ func Run(app App) error {
 						Type:   TypeUp,
 					})
 			}
+			return false
 		})
 		defer mouseUpEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "mouseup", mouseUpEvtCb)
@@ -264,8 +274,9 @@ func Run(app App) error {
 
 	// MouseMotionEventEnabled
 	if (settings.EventMask & MouseMotionEventEnabled) != 0 {
-		mouseMoveEvtCb := js.NewEventCallback(js.StopImmediatePropagation, func(event js.Value) {
+		mouseMoveEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				event := args[0]
 				app.OnMouseEvent(
 					MouseEvent{
 						X:      int32(event.Get("offsetX").Int()),
@@ -274,6 +285,7 @@ func Run(app App) error {
 						Type:   TypeMove,
 					})
 			}
+			return false
 		})
 		defer mouseMoveEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "mousemove", mouseMoveEvtCb)
@@ -281,14 +293,16 @@ func Run(app App) error {
 
 	// ScrollEvent
 	if (settings.EventMask & ScrollEventEnabled) != 0 {
-		wheelEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
+		wheelEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				event := args[0]
 				app.OnScrollEvent(
 					ScrollEvent{
 						X: int32(event.Get("deltaX").Int()),
 						Y: -int32(event.Get("deltaY").Int()),
 					})
 			}
+			return false
 		})
 		defer wheelEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "wheel", wheelEvtCb)
@@ -296,8 +310,10 @@ func Run(app App) error {
 
 	// KeyEvent
 	if (settings.EventMask & KeyEventEnabled) != 0 {
-		keyDownEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
+		keyDownEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				event := args[0]
+				event.Call("preventDefault")
 				keyCode := event.Get("key").String()
 				app.OnKeyEvent(
 					KeyEvent{
@@ -306,12 +322,15 @@ func Run(app App) error {
 						Type:  TypeDown,
 					})
 			}
+			return false
 		})
 		defer keyDownEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "keydown", keyDownEvtCb)
 
-		keyUpEvtCb := js.NewEventCallback(js.PreventDefault|js.StopImmediatePropagation, func(event js.Value) {
+		keyUpEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				event := args[0]
+				event.Call("preventDefault")
 				keyCode := event.Get("key").String()
 				app.OnKeyEvent(
 					KeyEvent{
@@ -320,6 +339,7 @@ func Run(app App) error {
 						Type:  TypeUp,
 					})
 			}
+			return false
 		})
 		defer keyUpEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "keyup", keyUpEvtCb)
@@ -328,22 +348,21 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Render Loop
 	// -------------------------------------------------------------------- //
-	var renderFrame js.Callback
+	var renderFrame js.Func
 	elapsedFpsTime := time.Duration(0)
 
-	renderFrame = js.NewCallback(func(args []js.Value) {
+	renderFrame = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if !browserRuntime.isPaused {
 			now := time.Now()
 			app.OnRender(elapsedFpsTime, mutex)
 			elapsedFpsTime = time.Since(now)
-		} else {
-			time.Sleep(time.Millisecond * 10)
 		}
 		if !browserRuntime.isStopped {
 			js.Global().Call("requestAnimationFrame", renderFrame)
 		} else {
 			browserRuntime.done <- true
 		}
+		return false
 	})
 	js.Global().Call("requestAnimationFrame", renderFrame)
 
