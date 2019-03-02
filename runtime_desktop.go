@@ -97,6 +97,7 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Init
 	// -------------------------------------------------------------------- //
+	sdl.SetHint(sdl.HINT_VIDEO_HIGHDPI_DISABLED, "1")
 	if err = sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -110,7 +111,13 @@ func Run(app App) error {
 
 	if runtime.GOOS == "darwin" {
 		sdl.GLSetAttribute(sdl.GL_CONTEXT_PROFILE_MASK, sdl.GL_CONTEXT_PROFILE_CORE)
+
 	}
+
+	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
+	sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 2)
+
+	sdl.GLSetAttribute(sdl.GL_ACCELERATED_VISUAL, 1)
 
 	// Window creation
 	window, err := sdl.CreateWindow(settings.Name, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
@@ -228,12 +235,14 @@ func Run(app App) error {
 				}
 			case *sdl.MouseMotionEvent:
 				if (settings.EventMask & MouseMotionEventEnabled) != 0 {
-					publish(MouseEvent{
-						X:      t.X,
-						Y:      t.Y,
-						Type:   TypeMove,
-						Button: ButtonNone,
-					})
+					if (int(t.X) > settings.MouseMotionThreshold) || (int(t.Y) > settings.MouseMotionThreshold) {
+						publish(MouseEvent{
+							X:      t.X,
+							Y:      t.Y,
+							Type:   TypeMove,
+							Button: ButtonNone,
+						})
+					}
 				}
 			case *sdl.MouseWheelEvent:
 				if (settings.EventMask & ScrollEventEnabled) != 0 {

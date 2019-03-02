@@ -277,12 +277,16 @@ func Run(app App) error {
 		mouseMoveEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
-				publish(MouseEvent{
-					X:      int32(event.Get("offsetX").Int()),
-					Y:      int32(event.Get("offsetY").Int()),
-					Button: ButtonNone,
-					Type:   TypeMove,
-				})
+				offsetX := event.Get("offsetX").Int()
+				offsetY := event.Get("offsetY").Int()
+				if (offsetX > settings.MouseMotionThreshold) || (offsetY > settings.MouseMotionThreshold) {
+					publish(MouseEvent{
+						X:      int32(offsetX),
+						Y:      int32(offsetY),
+						Button: ButtonNone,
+						Type:   TypeMove,
+					})
+				}
 			}
 			return false
 		})
