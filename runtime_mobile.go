@@ -7,6 +7,7 @@ package tge
 import (
 	fmt "fmt"
 	ioutil "io/ioutil"
+	"math"
 	sync "sync"
 	time "time"
 
@@ -118,6 +119,7 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Init
 	// -------------------------------------------------------------------- //
+	var moveEvtChan chan MouseEvent
 	elapsedFpsTime := time.Duration(0)
 	mobile.Main(func(a mobile.App) {
 		for e := range a.Events() {
@@ -137,10 +139,19 @@ func Run(app App) error {
 					app.OnResume()
 					mobileRuntime.isPaused = false
 
+					// Mouse motion hack to queue move events
+					moveEvtChan = make(chan MouseEvent, 100)
+					go func() {
+						for !mobileRuntime.isStopped {
+							publish(<-moveEvtChan)
+						}
+					}()
+
 				case lifecycle.StageAlive:
 					mobileRuntime.isPaused = true
 					app.OnPause()
 					mobileRuntime.isStopped = true
+					close(moveEvtChan)
 					app.OnStop()
 					mobileRuntime.context = nil
 				}
@@ -176,21 +187,24 @@ func Run(app App) error {
 				case touch.TypeMove:
 					// mouse move
 					if (settings.EventMask & MouseMotionEventEnabled) != 0 {
-						x := int32(e.X)
-						y := int32(e.Y)
-						if (mobileRuntime.lastMouseEvent.X != x) && (mobileRuntime.lastMouseEvent.Y != y) {
-							mobileRuntime.lastMouseEvent = MouseEvent{
-								X:      x,
-								Y:      y,
-								Type:   TypeMove,
-								Button: ButtonNone,
+						go func() {
+							x := int32(e.X)
+							y := int32(e.Y)
+							if math.Abs(float64(mobileRuntime.lastMouseEvent.X-x)) > float64(1) || math.Abs(float64(mobileRuntime.lastMouseEvent.Y-y)) > float64(1) {
+								moveEvtChan <- MouseEvent{
+									X:      x,
+									Y:      y,
+									Type:   TypeMove,
+									Button: ButtonNone,
+								}
 							}
-							go publish(mobileRuntime.lastMouseEvent)
-						}
+						}()
 					}
 				case touch.TypeEnd:
 					// Touch down
 					if (settings.EventMask & MouseButtonEventEnabled) != 0 {
+						mobileRuntime.lastMouseEvent.X = 0
+						mobileRuntime.lastMouseEvent.Y = 0
 						go publish(MouseEvent{
 							X:      int32(e.X),
 							Y:      int32(e.Y),

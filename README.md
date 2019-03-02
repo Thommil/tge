@@ -1,5 +1,5 @@
 # TGE - Portable Runtime in GO
-**TGE** aims to provide a light, portable and almost unopiniated runtime to integrate your favorite GO libraries (at least mines) to portable applications (dektop, web & mobile).
+**TGE** aims to provide a light, portable and unopiniated runtime to integrate your favorite GO libraries (at least mines) to portable applications (dektop, web & mobile).
 
 **TGE** is not and should not be another new game engine but instead a way to focus on business code and not low level pipes and hacks. 
 
@@ -44,7 +44,7 @@ The create a new application workspace, run:
 tge-cli init [package-name]
 ```
 
-Ideally, the package-name should be based on standard Go package rules (ex: gihtub.com/thommil/my-app) but local package also works (ex: my-app).
+Ideally, the package-name should be based on standard Go package rules (ex: github.com/thommil/my-app) but local package also works (ex: my-app).
 
 An application folder will be created with all needed resources to begin. See [Go Doc](https://godoc.org/github.com/thommil/tge) for details.
 
@@ -53,4 +53,4 @@ Once the application folder is created, releases can be generated using:
 ```shell
 tge-cli build -target [target] [package-path]
 ```
-Target allows to build yoour application for Desktop, Mobile or Web backend. See [tge-cli](https://github.com/thommil/tge-cli) for full details on how to use it.
+Target allows to build your application for Desktop, Mobile or Web backend. See [tge-cli](https://github.com/thommil/tge-cli) for full details on how to use it.
