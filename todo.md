@@ -17,6 +17,7 @@
 * Icons (tge)
 
 ### P1
+* Reflect on plugins (tge & tge-*)
 * Write/DB support (tge & tge-examples)
 * Network Support (tge & tge-examples)
 * AL (tge-al)

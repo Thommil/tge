@@ -16,7 +16,6 @@ import (
 // -------------------------------------------------------------------- //
 type browserRuntime struct {
 	app       App
-	plugins   map[string]Plugin
 	ticker    *time.Ticker
 	canvas    *js.Value
 	jsTge     *js.Value
@@ -26,46 +25,10 @@ type browserRuntime struct {
 }
 
 func (runtime *browserRuntime) Use(plugin Plugin) {
-	name := plugin.GetName()
-	if _, found := runtime.plugins[name]; !found {
-		runtime.plugins[name] = plugin
-		err := plugin.Init(runtime)
-		if err != nil {
-			fmt.Println(err)
-			panic(err)
-		}
-		fmt.Printf("Plugin %s loaded\n", name)
-	}
+	use(plugin, runtime)
 }
 
-func (runtime *browserRuntime) GetPlugin(name string) Plugin {
-	return runtime.plugins[name]
-}
-
-func (runtime *browserRuntime) GetHost() interface{} {
-	host := js.Global()
-	return &host
-}
-
-func (runtime *browserRuntime) GetRenderer() interface{} {
-	glContext := runtime.canvas.Call("getContext", "webgl2")
-	if glContext == js.Undefined() {
-		fmt.Println("WARNING: No WebGL2 support")
-		glContext = runtime.canvas.Call("getContext", "webgl")
-	}
-	if glContext == js.Undefined() {
-		fmt.Println("WARNING: No WebGL support")
-		glContext = runtime.canvas.Call("getContext", "experimental-webgl")
-	}
-	if glContext == js.Undefined() {
-		err := fmt.Errorf("No WebGL support found in brower")
-		fmt.Println(err)
-		panic(err)
-	}
-	return &glContext
-}
-
-func (runtime *browserRuntime) LoadAsset(p string) ([]byte, error) {
+func (runtime *browserRuntime) GetAsset(p string) ([]byte, error) {
 	var data []byte
 	var err error
 	var doneState = make(chan bool)
@@ -105,6 +68,45 @@ func (runtime *browserRuntime) LoadAsset(p string) ([]byte, error) {
 	return data, err
 }
 
+func (runtime *browserRuntime) GetHost() interface{} {
+	host := js.Global()
+	return &host
+}
+
+func (runtime *browserRuntime) GetPlugin(name string) Plugin {
+	return plugins[name]
+}
+
+func (runtime *browserRuntime) GetRenderer() interface{} {
+	glContext := runtime.canvas.Call("getContext", "webgl2")
+	if glContext == js.Undefined() {
+		fmt.Println("WARNING: No WebGL2 support")
+		glContext = runtime.canvas.Call("getContext", "webgl")
+	}
+	if glContext == js.Undefined() {
+		fmt.Println("WARNING: No WebGL support")
+		glContext = runtime.canvas.Call("getContext", "experimental-webgl")
+	}
+	if glContext == js.Undefined() {
+		err := fmt.Errorf("No WebGL support found in brower")
+		fmt.Println(err)
+		panic(err)
+	}
+	return &glContext
+}
+
+func (runtime *browserRuntime) Subscribe(channel string, listener Listener) {
+	subscribe(channel, listener)
+}
+
+func (runtime *browserRuntime) Unsubscribe(channel string, listener Listener) {
+	unsubscribe(channel, listener)
+}
+
+func (runtime *browserRuntime) Publish(event Event) {
+	publish(event)
+}
+
 func (runtime *browserRuntime) Stop() {
 	if !runtime.isPaused {
 		runtime.isPaused = true
@@ -112,10 +114,7 @@ func (runtime *browserRuntime) Stop() {
 	}
 	runtime.isStopped = true
 	runtime.app.OnStop()
-	// Unload plugins
-	for _, plugin := range runtime.plugins {
-		plugin.Dispose()
-	}
+	dispose()
 	runtime.app.OnDispose()
 }
 
@@ -146,7 +145,6 @@ func Run(app App) error {
 	// Instanciate Runtime
 	browserRuntime := &browserRuntime{
 		app:       app,
-		plugins:   make(map[string]Plugin),
 		isPaused:  true,
 		isStopped: true,
 		canvas:    &canvas,
@@ -167,8 +165,8 @@ func Run(app App) error {
 	browserRuntime.isPaused = false
 
 	// Resize App
-	app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
-		browserRuntime.canvas.Get("clientHeight").Int())
+	go publish(ResizeEvent{int32(browserRuntime.canvas.Get("clientWidth").Int()),
+		int32(browserRuntime.canvas.Get("clientHeight").Int())})
 
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
@@ -199,8 +197,8 @@ func Run(app App) error {
 	// Resize
 	resizeEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if !browserRuntime.isStopped {
-			app.OnResize(browserRuntime.canvas.Get("clientWidth").Int(),
-				browserRuntime.canvas.Get("clientHeight").Int())
+			publish(ResizeEvent{int32(browserRuntime.canvas.Get("clientWidth").Int()),
+				int32(browserRuntime.canvas.Get("clientHeight").Int())})
 		}
 		return false
 	})
@@ -246,13 +244,12 @@ func Run(app App) error {
 		mouseDownEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
-				app.OnMouseEvent(
-					MouseEvent{
-						X:      int32(event.Get("offsetX").Int()),
-						Y:      int32(event.Get("offsetY").Int()),
-						Button: Button(event.Get("button").Int() + 1),
-						Type:   TypeDown,
-					})
+				publish(MouseEvent{
+					X:      int32(event.Get("offsetX").Int()),
+					Y:      int32(event.Get("offsetY").Int()),
+					Button: Button(event.Get("button").Int() + 1),
+					Type:   TypeDown,
+				})
 			}
 			return false
 		})
@@ -262,13 +259,12 @@ func Run(app App) error {
 		mouseUpEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
-				app.OnMouseEvent(
-					MouseEvent{
-						X:      int32(event.Get("offsetX").Int()),
-						Y:      int32(event.Get("offsetY").Int()),
-						Button: Button(event.Get("button").Int() + 1),
-						Type:   TypeUp,
-					})
+				publish(MouseEvent{
+					X:      int32(event.Get("offsetX").Int()),
+					Y:      int32(event.Get("offsetY").Int()),
+					Button: Button(event.Get("button").Int() + 1),
+					Type:   TypeUp,
+				})
 			}
 			return false
 		})
@@ -281,13 +277,12 @@ func Run(app App) error {
 		mouseMoveEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
-				app.OnMouseEvent(
-					MouseEvent{
-						X:      int32(event.Get("offsetX").Int()),
-						Y:      int32(event.Get("offsetY").Int()),
-						Button: ButtonNone,
-						Type:   TypeMove,
-					})
+				publish(MouseEvent{
+					X:      int32(event.Get("offsetX").Int()),
+					Y:      int32(event.Get("offsetY").Int()),
+					Button: ButtonNone,
+					Type:   TypeMove,
+				})
 			}
 			return false
 		})
@@ -300,11 +295,10 @@ func Run(app App) error {
 		wheelEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
-				app.OnScrollEvent(
-					ScrollEvent{
-						X: int32(event.Get("deltaX").Int()),
-						Y: -int32(event.Get("deltaY").Int()),
-					})
+				publish(ScrollEvent{
+					X: int32(event.Get("deltaX").Int()),
+					Y: -int32(event.Get("deltaY").Int()),
+				})
 			}
 			return false
 		})
@@ -319,12 +313,11 @@ func Run(app App) error {
 				event := args[0]
 				event.Call("preventDefault")
 				keyCode := event.Get("key").String()
-				app.OnKeyEvent(
-					KeyEvent{
-						Key:   keyMap[keyCode],
-						Value: keyCode,
-						Type:  TypeDown,
-					})
+				publish(KeyEvent{
+					Key:   keyMap[keyCode],
+					Value: keyCode,
+					Type:  TypeDown,
+				})
 			}
 			return false
 		})
@@ -336,12 +329,11 @@ func Run(app App) error {
 				event := args[0]
 				event.Call("preventDefault")
 				keyCode := event.Get("key").String()
-				app.OnKeyEvent(
-					KeyEvent{
-						Key:   keyMap[keyCode],
-						Value: keyCode,
-						Type:  TypeUp,
-					})
+				publish(KeyEvent{
+					Key:   keyMap[keyCode],
+					Value: keyCode,
+					Type:  TypeUp,
+				})
 			}
 			return false
 		})

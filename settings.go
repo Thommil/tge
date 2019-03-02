@@ -31,7 +31,7 @@ type Settings struct {
 	Height int `json:"height" yaml:"height"`
 	// TPS (ticks per seconds) target rate
 	TPS int `json:"tps" yaml:"tps"`
-	// EventMask allows to enabled/disable events receiver on App
+	// EventMask allows to enabled/disable events receiver on Runtime
 	EventMask EventMask `json:"event_mask" yaml:"event_mask"`
 }
 
@@ -42,5 +42,5 @@ var defaultSettings = Settings{
 	Width:      640,
 	Height:     480,
 	TPS:        100,
-	EventMask:  MouseButtonEventEnabled | ScrollEventEnabled | KeyEventEnabled,
+	EventMask:  AllEventsEnabled,
 }

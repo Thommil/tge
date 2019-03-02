@@ -2,6 +2,8 @@
 package tge
 
 import (
+	fmt "fmt"
+	reflect "reflect"
 	sync "sync"
 	time "time"
 )
@@ -10,25 +12,27 @@ import (
 type App interface {
 	OnCreate(settings *Settings) error
 	OnStart(runtime Runtime) error
-	OnResize(width int, height int)
 	OnResume()
 	OnRender(elaspedTime time.Duration, mutex *sync.Mutex)
 	OnTick(elaspedTime time.Duration, mutex *sync.Mutex)
-	OnMouseEvent(event MouseEvent)
-	OnScrollEvent(event ScrollEvent)
-	OnKeyEvent(event KeyEvent)
 	OnPause()
 	OnStop()
 	OnDispose() error
 }
 
+// Listener is the callback definition for pubsub model
+type Listener func(event Event) bool
+
 // Runtime API
 type Runtime interface {
 	Use(plugin Plugin)
-	GetPlugin(name string) Plugin
+	GetAsset(path string) ([]byte, error)
 	GetHost() interface{}
+	GetPlugin(name string) Plugin
 	GetRenderer() interface{}
-	LoadAsset(path string) ([]byte, error)
+	Subscribe(channel string, listener Listener)
+	Unsubscribe(channel string, listener Listener)
+	Publish(event Event)
 	Stop()
 }
 
@@ -70,6 +74,22 @@ const (
 	TypeMove Type = 3
 )
 
+// Event interface definition
+type Event interface {
+	// Type defines an unitary keywork/channel for event
+	Channel() string
+}
+
+// ResizeEvent definition
+type ResizeEvent struct {
+	Width, Height int32
+}
+
+// Channel of ResizeEvent
+func (e ResizeEvent) Channel() string {
+	return "resize"
+}
+
 // MouseEvent definition
 type MouseEvent struct {
 	X, Y   int32
@@ -77,9 +97,19 @@ type MouseEvent struct {
 	Type   Type
 }
 
+// Channel of MouseEvent
+func (e MouseEvent) Channel() string {
+	return "mouse"
+}
+
 // ScrollEvent definition
 type ScrollEvent struct {
 	X, Y int32
+}
+
+// Channel of ScrollEvent
+func (e ScrollEvent) Channel() string {
+	return "scroll"
 }
 
 // KeyEvent definition
@@ -89,6 +119,66 @@ type KeyEvent struct {
 	Type  Type
 }
 
+// Channel of KeyEvent
+func (e KeyEvent) Channel() string {
+	return "key"
+}
+
+// Inner map of plugins
+var plugins = make(map[string]Plugin)
+
+func use(plugin Plugin, runtime Runtime) {
+	name := plugin.GetName()
+	if _, found := plugins[name]; !found {
+		plugins[name] = plugin
+		err := plugin.Init(runtime)
+		if err != nil {
+			fmt.Println(err)
+			panic(err)
+		}
+		fmt.Printf("Plugin %s loaded\n", name)
+	}
+}
+
+// Inner map of listeners
+var listeners = make(map[string][]Listener)
+
+func subscribe(channel string, listener Listener) {
+	if _, found := listeners[channel]; !found {
+		listeners[channel] = make([]Listener, 0, 10)
+	}
+	listeners[channel] = append(listeners[channel], listener)
+}
+
+func unsubscribe(channel string, listener Listener) {
+	if all, found := listeners[channel]; found {
+		for i, l := range all {
+			if reflect.ValueOf(l).Pointer() == reflect.ValueOf(listener).Pointer() {
+				listeners[channel] = append(listeners[channel][:i], listeners[channel][i+1:]...)
+				break
+			}
+		}
+	}
+}
+
+func publish(event Event) {
+	if list, found := listeners[event.Channel()]; found {
+		for _, listener := range list {
+			if listener(event) {
+				break
+			}
+		}
+	}
+}
+
+// Global dispose
+func dispose() {
+	for _, plugin := range plugins {
+		plugin.Dispose()
+	}
+}
+
+// Keycode constants
 const (
 	// Unkwown
 

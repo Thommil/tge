@@ -4,13 +4,9 @@
 interface App {
     OnCreate(Settings) error
     OnStart(Runtime) error
-    OnResize(int, int)
     OnResume()
     OnRender(Duration, Mutex)
     OnTick(Duration, Mutex)
-    OnMouseEvent(MouseEvent)
-    OnScrollEvent(ScrollEvent)
-    OnKeyEvent(KeyEvent)
     OnPause()
     OnStop()
     OnDispose()
@@ -22,10 +18,13 @@ class tge << (P,#FF7700) Package >> {
 
 interface Runtime {
     Use(Plugin)
-    GetPlugin(string) []Plugin
+    GetAsset(string) []byte, error
     GetHost() interface{}
+    GetPlugin(string) Plugin
     GetRenderer() interface{}
-    LoadAsset(string) []byte, error
+    Subscribe(string, Listener)
+	Unsubscribe(string, Listener)
+    Publish(Event)
     Stop()
 }
 
@@ -36,7 +35,7 @@ interface Plugin{
 }
 
 class "tge-*" << (P,#FF7700) Packages >> {
-    GetPlugin() Plugin
+    GetInstance() Plugin
 }
 
 ' Relations
@@ -45,6 +44,7 @@ tge --> Runtime : instanciate
 App <-- Runtime : manage
 App --> Runtime : use
 App --> Plugin : use
+
 Runtime --> Plugin : manage
 Plugin --> Runtime  : use
 "tge-*" --> Plugin : expose

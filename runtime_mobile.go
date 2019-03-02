@@ -24,7 +24,6 @@ import (
 // -------------------------------------------------------------------- //
 type mobileRuntime struct {
 	app            App
-	plugins        map[string]Plugin
 	host           mobile.App
 	isPaused       bool
 	isStopped      bool
@@ -33,36 +32,39 @@ type mobileRuntime struct {
 }
 
 func (runtime *mobileRuntime) Use(plugin Plugin) {
-	name := plugin.GetName()
-	if _, found := runtime.plugins[name]; !found {
-		runtime.plugins[name] = plugin
-		err := plugin.Init(runtime)
-		if err != nil {
-			fmt.Println(err)
-			panic(err)
-		}
-		fmt.Printf("Plugin %s loaded\n", name)
+	use(plugin, runtime)
+}
+
+func (runtime *mobileRuntime) GetAsset(p string) ([]byte, error) {
+	if file, err := asset.Open(p); err != nil {
+		return nil, err
+	} else {
+		return ioutil.ReadAll(file)
 	}
-}
-
-func (runtime *mobileRuntime) GetPlugin(name string) Plugin {
-	return runtime.plugins[name]
-}
-
-func (runtime *mobileRuntime) GetRenderer() interface{} {
-	return runtime.context
 }
 
 func (runtime *mobileRuntime) GetHost() interface{} {
 	return runtime.host
 }
 
-func (runtime *mobileRuntime) LoadAsset(p string) ([]byte, error) {
-	if file, err := asset.Open(p); err != nil {
-		return nil, err
-	} else {
-		return ioutil.ReadAll(file)
-	}
+func (runtime *mobileRuntime) GetPlugin(name string) Plugin {
+	return plugins[name]
+}
+
+func (runtime *mobileRuntime) GetRenderer() interface{} {
+	return runtime.context
+}
+
+func (runtime *mobileRuntime) Subscribe(channel string, listener Listener) {
+	subscribe(channel, listener)
+}
+
+func (runtime *mobileRuntime) Unsubscribe(channel string, listener Listener) {
+	unsubscribe(channel, listener)
+}
+
+func (runtime *mobileRuntime) Publish(event Event) {
+	publish(event)
 }
 
 func (runtime *mobileRuntime) Stop() {
@@ -85,18 +87,11 @@ func Run(app App) error {
 	// Instanciate Runtime
 	mobileRuntime := &mobileRuntime{
 		app:            app,
-		plugins:        make(map[string]Plugin),
 		isPaused:       true,
 		isStopped:      true,
 		lastMouseEvent: MouseEvent{},
 	}
-
-	// Unload plugins
-	defer func() {
-		for _, plugin := range mobileRuntime.plugins {
-			plugin.Dispose()
-		}
-	}()
+	defer dispose()
 
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
@@ -162,7 +157,7 @@ func Run(app App) error {
 				}
 
 			case size.Event:
-				app.OnResize(e.WidthPx, e.HeightPx)
+				go publish(ResizeEvent{int32(e.WidthPx), int32(e.HeightPx)})
 
 			case touch.Event:
 				switch e.Type {
@@ -171,13 +166,12 @@ func Run(app App) error {
 					if (settings.EventMask & MouseButtonEventEnabled) != 0 {
 						mobileRuntime.lastMouseEvent.X = int32(e.X)
 						mobileRuntime.lastMouseEvent.Y = int32(e.Y)
-						app.OnMouseEvent(
-							MouseEvent{
-								X:      mobileRuntime.lastMouseEvent.X,
-								Y:      mobileRuntime.lastMouseEvent.Y,
-								Type:   TypeDown,
-								Button: ButtonNone,
-							})
+						go publish(MouseEvent{
+							X:      mobileRuntime.lastMouseEvent.X,
+							Y:      mobileRuntime.lastMouseEvent.Y,
+							Type:   TypeDown,
+							Button: ButtonNone,
+						})
 					}
 				case touch.TypeMove:
 					// mouse move
@@ -191,19 +185,18 @@ func Run(app App) error {
 								Type:   TypeMove,
 								Button: ButtonNone,
 							}
-							app.OnMouseEvent(mobileRuntime.lastMouseEvent)
+							go publish(mobileRuntime.lastMouseEvent)
 						}
 					}
 				case touch.TypeEnd:
 					// Touch down
 					if (settings.EventMask & MouseButtonEventEnabled) != 0 {
-						app.OnMouseEvent(
-							MouseEvent{
-								X:      int32(e.X),
-								Y:      int32(e.Y),
-								Type:   TypeUp,
-								Button: ButtonNone,
-							})
+						go publish(MouseEvent{
+							X:      int32(e.X),
+							Y:      int32(e.Y),
+							Type:   TypeUp,
+							Button: ButtonNone,
+						})
 					}
 				}
 			}

@@ -33,7 +33,6 @@ func init() {
 // -------------------------------------------------------------------- //
 type desktopRuntime struct {
 	app        App
-	plugins    map[string]Plugin
 	host       *sdl.Window
 	context    *sdl.GLContext
 	isPaused   bool
@@ -42,32 +41,35 @@ type desktopRuntime struct {
 }
 
 func (runtime *desktopRuntime) Use(plugin Plugin) {
-	name := plugin.GetName()
-	if _, found := runtime.plugins[name]; !found {
-		runtime.plugins[name] = plugin
-		err := plugin.Init(runtime)
-		if err != nil {
-			fmt.Println(err)
-			panic(err)
-		}
-		fmt.Printf("Plugin %s loaded\n", name)
-	}
+	use(plugin, runtime)
 }
 
-func (runtime *desktopRuntime) GetPlugin(name string) Plugin {
-	return runtime.plugins[name]
-}
-
-func (runtime *desktopRuntime) GetRenderer() interface{} {
-	return runtime.context
+func (runtime *desktopRuntime) GetAsset(p string) ([]byte, error) {
+	return ioutil.ReadFile(path.Join(runtime.assetsPath, p))
 }
 
 func (runtime *desktopRuntime) GetHost() interface{} {
 	return runtime.host
 }
 
-func (runtime *desktopRuntime) LoadAsset(p string) ([]byte, error) {
-	return ioutil.ReadFile(path.Join(runtime.assetsPath, p))
+func (runtime *desktopRuntime) GetPlugin(name string) Plugin {
+	return plugins[name]
+}
+
+func (runtime *desktopRuntime) GetRenderer() interface{} {
+	return runtime.context
+}
+
+func (runtime *desktopRuntime) Subscribe(channel string, listener Listener) {
+	subscribe(channel, listener)
+}
+
+func (runtime *desktopRuntime) Unsubscribe(channel string, listener Listener) {
+	unsubscribe(channel, listener)
+}
+
+func (runtime *desktopRuntime) Publish(event Event) {
+	publish(event)
 }
 
 func (runtime *desktopRuntime) Stop() {
@@ -127,7 +129,6 @@ func Run(app App) error {
 	// Instanciate Runtime
 	desktopRuntime := &desktopRuntime{
 		app:       app,
-		plugins:   make(map[string]Plugin),
 		host:      window,
 		context:   &context,
 		isPaused:  true,
@@ -157,11 +158,7 @@ func Run(app App) error {
 	}
 
 	// Unload plugins
-	defer func() {
-		for _, plugin := range desktopRuntime.plugins {
-			plugin.Dispose()
-		}
-	}()
+	defer dispose()
 	defer sdl.GLDeleteContext(context)
 
 	// Start App
@@ -211,52 +208,48 @@ func Run(app App) error {
 					desktopRuntime.isPaused = false
 					resizeAtStart.Do(func() {
 						w, h := window.GetSize()
-						app.OnResize(int(w), int(h))
+						publish(ResizeEvent{w, h})
 					})
 				case sdl.WINDOWEVENT_FOCUS_LOST:
 					desktopRuntime.isPaused = true
 					app.OnPause()
 				case sdl.WINDOWEVENT_RESIZED:
 					w, h := window.GetSize()
-					app.OnResize(int(w), int(h))
+					publish(ResizeEvent{w, h})
 				}
 			case *sdl.MouseButtonEvent:
 				if (settings.EventMask & MouseButtonEventEnabled) != 0 {
-					app.OnMouseEvent(
-						MouseEvent{
-							X:      t.X,
-							Y:      t.Y,
-							Type:   Type(t.Type),
-							Button: Button(t.Button),
-						})
+					publish(MouseEvent{
+						X:      t.X,
+						Y:      t.Y,
+						Type:   Type(t.Type),
+						Button: Button(t.Button),
+					})
 				}
 			case *sdl.MouseMotionEvent:
 				if (settings.EventMask & MouseMotionEventEnabled) != 0 {
-					app.OnMouseEvent(
-						MouseEvent{
-							X:      t.X,
-							Y:      t.Y,
-							Type:   TypeMove,
-							Button: ButtonNone,
-						})
+					publish(MouseEvent{
+						X:      t.X,
+						Y:      t.Y,
+						Type:   TypeMove,
+						Button: ButtonNone,
+					})
 				}
 			case *sdl.MouseWheelEvent:
 				if (settings.EventMask & ScrollEventEnabled) != 0 {
-					app.OnScrollEvent(
-						ScrollEvent{
-							X: t.X,
-							Y: t.Y,
-						})
+					publish(ScrollEvent{
+						X: t.X,
+						Y: t.Y,
+					})
 				}
 			case *sdl.KeyboardEvent:
 				if (settings.EventMask & KeyEventEnabled) != 0 {
 					keyCode := sdl.GetKeyName(t.Keysym.Sym)
-					app.OnKeyEvent(
-						KeyEvent{
-							Type:  Type(t.Type),
-							Key:   keyMap[keyCode],
-							Value: keyCode,
-						})
+					publish(KeyEvent{
+						Type:  Type(t.Type),
+						Key:   keyMap[keyCode],
+						Value: keyCode,
+					})
 				}
 			}
 		}
