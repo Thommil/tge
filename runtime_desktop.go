@@ -213,7 +213,11 @@ func Run(app App) error {
 					desktopRuntime.isPaused = false
 					resizeAtStart.Do(func() {
 						w, h := window.GetSize()
-						publish(ResizeEvent{w, h})
+						if runtime.GOOS != "windows" {
+							publish(ResizeEvent{w, h})
+						} else if !settings.Fullscreen {
+							publish(ResizeEvent{w, h})
+						}
 					})
 				case sdl.WINDOWEVENT_FOCUS_LOST:
 					desktopRuntime.isPaused = true
