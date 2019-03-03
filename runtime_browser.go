@@ -199,11 +199,11 @@ func Run(app App) error {
 		if !browserRuntime.isStopped {
 			w := int32(browserRuntime.canvas.Get("clientWidth").Int())
 			h := int32(browserRuntime.canvas.Get("clientHeight").Int())
+			jsTge.Call("resize", w, h)
 			publish(ResizeEvent{
 				Width:  w,
 				Height: h,
 			})
-			jsTge.Call("resize", w, h)
 		}
 		return false
 	})
