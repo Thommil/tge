@@ -12,10 +12,10 @@ package tge
 
 import (
 	fmt "fmt"
-	"io/ioutil"
-	"os"
-	"path"
-	"path/filepath"
+	ioutil "io/ioutil"
+	os "os"
+	path "path"
+	filepath "path/filepath"
 	runtime "runtime"
 	sync "sync"
 	time "time"
@@ -149,15 +149,15 @@ func Run(app App) error {
 		}
 		if runtime.GOOS == "darwin" {
 			// Packed mode (DIST for darwin)
-			desktopRuntime.assetsPath = path.Join(path.Dir(p), "../Resources")
+			desktopRuntime.assetsPath = filepath.Join(filepath.Dir(p), "../Resources")
 		} else {
 			// Unpacked mode (DIST for windows/linux)
-			desktopRuntime.assetsPath = path.Join(path.Dir(p), "assets")
+			desktopRuntime.assetsPath = filepath.Join(filepath.Dir(p), "assets")
 		}
 
 		if _, err := os.Stat(desktopRuntime.assetsPath); os.IsNotExist(err) {
 			// Unpacked mode (DEV for all)
-			desktopRuntime.assetsPath = path.Join(path.Dir(p), "../../assets")
+			desktopRuntime.assetsPath = filepath.Join(filepath.Dir(p), "../../assets")
 		}
 
 	}

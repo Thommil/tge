@@ -6,6 +6,7 @@ package tge
 
 import (
 	fmt "fmt"
+	"runtime"
 	sync "sync"
 	js "syscall/js"
 	time "time"
@@ -165,8 +166,10 @@ func Run(app App) error {
 	browserRuntime.isPaused = false
 
 	// Resize App
-	go publish(ResizeEvent{int32(browserRuntime.canvas.Get("clientWidth").Int()),
-		int32(browserRuntime.canvas.Get("clientHeight").Int())})
+	if runtime.GOOS != "windows" && !settings.Fullscreen {
+		go publish(ResizeEvent{int32(browserRuntime.canvas.Get("clientWidth").Int()),
+			int32(browserRuntime.canvas.Get("clientHeight").Int())})
+	}
 
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
