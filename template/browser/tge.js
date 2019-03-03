@@ -13,6 +13,7 @@
         throw new Error('Canvas element not found (must be #canvas)');
     }
 
+    let fullscreen = false
     let assetsMap = {}
 
     global.tge = {
@@ -25,6 +26,7 @@
         },
 
         setFullscreen(enabled) {
+            fullscreen = enabled
             if (enabled) {
                 canvasEl.classList.add('fullscreen');
             } else {
@@ -35,8 +37,10 @@
         },
 
         resize(width, height) {
-            canvasEl.style['width'] = width + 'px';
-            canvasEl.style['height'] = height + 'px';
+            if (!fullscreen) {
+                canvasEl.style['width'] = width + 'px';
+                canvasEl.style['height'] = height + 'px';                
+            }                        
             canvasEl.setAttribute('width',canvasEl.clientWidth);
             canvasEl.setAttribute('height', canvasEl.clientHeight);
         },

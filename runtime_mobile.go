@@ -168,7 +168,7 @@ func Run(app App) error {
 				}
 
 			case size.Event:
-				go publish(ResizeEvent{int32(e.WidthPx), int32(e.HeightPx)})
+				publish(ResizeEvent{int32(e.WidthPx), int32(e.HeightPx)})
 
 			case touch.Event:
 				switch e.Type {
@@ -190,7 +190,7 @@ func Run(app App) error {
 						go func() {
 							x := int32(e.X)
 							y := int32(e.Y)
-							if math.Abs(float64(mobileRuntime.lastMouseEvent.X-x)) > float64(settings.MouseMotionThreshold) || math.Abs(float64(mobileRuntime.lastMouseEvent.Y-y)) > float64(settings.MouseMotionThreshold) {
+							if math.Abs(float64(mobileRuntime.lastMouseEvent.X-x)) > float64(1) || math.Abs(float64(mobileRuntime.lastMouseEvent.Y-y)) > float64(1) {
 								moveEvtChan <- MouseEvent{
 									X:      x,
 									Y:      y,

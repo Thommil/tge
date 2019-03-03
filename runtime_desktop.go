@@ -115,9 +115,7 @@ func Run(app App) error {
 	}
 
 	sdl.GLSetAttribute(sdl.GL_MULTISAMPLEBUFFERS, 1)
-	sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 2)
-
-	sdl.GLSetAttribute(sdl.GL_ACCELERATED_VISUAL, 1)
+	sdl.GLSetAttribute(sdl.GL_MULTISAMPLESAMPLES, 8)
 
 	// Window creation
 	window, err := sdl.CreateWindow(settings.Name, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
@@ -235,14 +233,12 @@ func Run(app App) error {
 				}
 			case *sdl.MouseMotionEvent:
 				if (settings.EventMask & MouseMotionEventEnabled) != 0 {
-					if (int(t.X) > settings.MouseMotionThreshold) || (int(t.Y) > settings.MouseMotionThreshold) {
-						publish(MouseEvent{
-							X:      t.X,
-							Y:      t.Y,
-							Type:   TypeMove,
-							Button: ButtonNone,
-						})
-					}
+					publish(MouseEvent{
+						X:      t.X,
+						Y:      t.Y,
+						Type:   TypeMove,
+						Button: ButtonNone,
+					})
 				}
 			case *sdl.MouseWheelEvent:
 				if (settings.EventMask & ScrollEventEnabled) != 0 {

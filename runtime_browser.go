@@ -197,8 +197,13 @@ func Run(app App) error {
 	// Resize
 	resizeEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if !browserRuntime.isStopped {
-			publish(ResizeEvent{int32(browserRuntime.canvas.Get("clientWidth").Int()),
-				int32(browserRuntime.canvas.Get("clientHeight").Int())})
+			w := int32(browserRuntime.canvas.Get("clientWidth").Int())
+			h := int32(browserRuntime.canvas.Get("clientHeight").Int())
+			publish(ResizeEvent{
+				Width:  w,
+				Height: h,
+			})
+			jsTge.Call("resize", w, h)
 		}
 		return false
 	})
@@ -277,16 +282,12 @@ func Run(app App) error {
 		mouseMoveEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
-				offsetX := event.Get("offsetX").Int()
-				offsetY := event.Get("offsetY").Int()
-				if (offsetX > settings.MouseMotionThreshold) || (offsetY > settings.MouseMotionThreshold) {
-					publish(MouseEvent{
-						X:      int32(offsetX),
-						Y:      int32(offsetY),
-						Button: ButtonNone,
-						Type:   TypeMove,
-					})
-				}
+				publish(MouseEvent{
+					X:      int32(event.Get("clientX").Int()),
+					Y:      int32(event.Get("clientY").Int()),
+					Button: ButtonNone,
+					Type:   TypeMove,
+				})
 			}
 			return false
 		})

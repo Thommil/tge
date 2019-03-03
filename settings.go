@@ -33,18 +33,14 @@ type Settings struct {
 	TPS int `json:"tps" yaml:"tps"`
 	// EventMask allows to enabled/disable events receiver on Runtime
 	EventMask EventMask `json:"event_mask" yaml:"event_mask"`
-	// MouseMotionThreshold sets the number of pixels during a mouse motion event
-	// needed to trigger events. Can be used to limit events fired.
-	MouseMotionThreshold int `json:"mouse_motion_treshold" yaml:"mouse_motion_treshold"`
 }
 
 // Default settings
 var defaultSettings = Settings{
-	Name:                 "TGE Application",
-	Fullscreen:           false,
-	Width:                640,
-	Height:               480,
-	TPS:                  100,
-	EventMask:            AllEventsEnabled,
-	MouseMotionThreshold: 1,
+	Name:       "TGE Application",
+	Fullscreen: false,
+	Width:      640,
+	Height:     480,
+	TPS:        100,
+	EventMask:  AllEventsEnabled,
 }

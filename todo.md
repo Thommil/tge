@@ -1,11 +1,8 @@
 # TODO
 ## Issues
- * Canvas size on resize browser (tge)
- * No touch event on browser (tge)
- * Precision for ES (tge-g3n)
- * Bad rendering SDL Mac (tge)
+ * No touch event on mobile browser (tge)
  * Windows events/lifecycle (tge)
- * Android refactoring (perfs + events + lifecycle) (tge)
+ * Assets path on windows (tge)
 
 ## Features
 ### P0
@@ -30,6 +27,7 @@
 * Licence
 
 ### P2
+* Android refactoring (perfs + events + lifecycle) (tge)
 * Virtual Keyboard for Android (tge)
 * Gesture Plugin (tge-gesture)
 * App name in cmd (tge-cli)
