@@ -11,6 +11,10 @@ import (
 	time "time"
 )
 
+func init() {
+	_runtimeInstance = &browserRuntime{}
+}
+
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
@@ -22,10 +26,6 @@ type browserRuntime struct {
 	isPaused  bool
 	isStopped bool
 	done      chan bool
-}
-
-func (runtime *browserRuntime) Use(plugin Plugin) {
-	use(plugin, runtime)
 }
 
 func (runtime *browserRuntime) GetAsset(p string) ([]byte, error) {
@@ -71,10 +71,6 @@ func (runtime *browserRuntime) GetAsset(p string) ([]byte, error) {
 func (runtime *browserRuntime) GetHost() interface{} {
 	host := js.Global()
 	return &host
-}
-
-func (runtime *browserRuntime) GetPlugin(name string) Plugin {
-	return plugins[name]
 }
 
 func (runtime *browserRuntime) GetRenderer() interface{} {
@@ -143,14 +139,16 @@ func Run(app App) error {
 	canvas := jsTge.Call("init")
 
 	// Instanciate Runtime
-	browserRuntime := &browserRuntime{
-		app:       app,
-		isPaused:  true,
-		isStopped: true,
-		canvas:    &canvas,
-		done:      make(chan bool),
-		jsTge:     &jsTge,
-	}
+	browserRuntime := _runtimeInstance.(*browserRuntime)
+	browserRuntime.app = app
+	browserRuntime.canvas = &canvas
+	browserRuntime.jsTge = &jsTge
+	browserRuntime.isPaused = true
+	browserRuntime.isStopped = true
+	browserRuntime.done = make(chan bool)
+
+	// Init plugins
+	initPlugins()
 
 	// Start App
 	err = app.OnStart(browserRuntime)

@@ -1,4 +1,5 @@
 // Copyright (c) 2019 Thomas MILLET. All rights reserved.
+
 package tge
 
 // EventMask defines mask event for enable/disable events receivers at runtime level

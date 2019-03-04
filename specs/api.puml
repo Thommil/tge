@@ -13,14 +13,16 @@ interface App {
 }
 
 class tge << (P,#FF7700) Package >> {
+    {static} Register(Plugin)
     {static} Run(App)
 }
 
+class "tge-{plugin}" << (P,#FF7700) Package >> {
+}
+
 interface Runtime {
-    Use(Plugin)
     GetAsset(string) []byte, error
     GetHost() interface{}
-    GetPlugin(string) Plugin
     GetRenderer() interface{}
     Subscribe(string, Listener)
 	Unsubscribe(string, Listener)
@@ -34,21 +36,17 @@ interface Plugin{
     Dispose()
 }
 
-class "tge-*" << (P,#FF7700) Packages >> {
-    Load() Plugin
-}
-
 ' Relations
-App --> tge : Run(App)
-tge --> Runtime : instanciate
+App ..> tge : import
+App ..> "tge-{plugin}" : import
+
 App <-- Runtime : manage
 App --> Runtime : use
-App --> Plugin : use
+tge --> Runtime : instanciate
 
 Runtime --> Plugin : manage
 Plugin --> Runtime  : use
-"tge-*" --> Plugin : expose
-App ..> "tge-*" : load
+"tge-{plugin}" --> Plugin : instanciate
 
 @enduml
 ```

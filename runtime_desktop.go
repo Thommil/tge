@@ -26,6 +26,7 @@ import (
 // init ensure that we're running on main thread
 func init() {
 	runtime.LockOSThread()
+	_runtimeInstance = &desktopRuntime{}
 }
 
 // -------------------------------------------------------------------- //
@@ -40,20 +41,12 @@ type desktopRuntime struct {
 	assetsPath string
 }
 
-func (runtime *desktopRuntime) Use(plugin Plugin) {
-	use(plugin, runtime)
-}
-
 func (runtime *desktopRuntime) GetAsset(p string) ([]byte, error) {
 	return ioutil.ReadFile(path.Join(runtime.assetsPath, p))
 }
 
 func (runtime *desktopRuntime) GetHost() interface{} {
 	return runtime.host
-}
-
-func (runtime *desktopRuntime) GetPlugin(name string) Plugin {
-	return plugins[name]
 }
 
 func (runtime *desktopRuntime) GetRenderer() interface{} {
@@ -132,13 +125,15 @@ func Run(app App) error {
 	}
 
 	// Instanciate Runtime
-	desktopRuntime := &desktopRuntime{
-		app:       app,
-		host:      window,
-		context:   &context,
-		isPaused:  true,
-		isStopped: true,
-	}
+	desktopRuntime := _runtimeInstance.(*desktopRuntime)
+	desktopRuntime.app = app
+	desktopRuntime.host = window
+	desktopRuntime.context = &context
+	desktopRuntime.isPaused = true
+	desktopRuntime.isStopped = true
+
+	// Init plugins
+	initPlugins()
 
 	// Eval assets path
 	if p, err := os.Executable(); err != nil {
@@ -269,6 +264,8 @@ func Run(app App) error {
 			elapsedFpsTime = time.Since(now)
 		}
 	}
+
+	runtime.UnlockOSThread()
 
 	return nil
 }

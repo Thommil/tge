@@ -20,6 +20,10 @@ import (
 	gl "github.com/thommil/tge-mobile/gl"
 )
 
+func init() {
+	_runtimeInstance = &mobileRuntime{}
+}
+
 // -------------------------------------------------------------------- //
 // Runtime implementation
 // -------------------------------------------------------------------- //
@@ -32,10 +36,6 @@ type mobileRuntime struct {
 	lastMouseEvent MouseEvent
 }
 
-func (runtime *mobileRuntime) Use(plugin Plugin) {
-	use(plugin, runtime)
-}
-
 func (runtime *mobileRuntime) GetAsset(p string) ([]byte, error) {
 	if file, err := asset.Open(p); err != nil {
 		return nil, err
@@ -46,10 +46,6 @@ func (runtime *mobileRuntime) GetAsset(p string) ([]byte, error) {
 
 func (runtime *mobileRuntime) GetHost() interface{} {
 	return runtime.host
-}
-
-func (runtime *mobileRuntime) GetPlugin(name string) Plugin {
-	return plugins[name]
 }
 
 func (runtime *mobileRuntime) GetRenderer() interface{} {
@@ -86,13 +82,15 @@ func Run(app App) error {
 	defer app.OnDispose()
 
 	// Instanciate Runtime
-	mobileRuntime := &mobileRuntime{
-		app:            app,
-		isPaused:       true,
-		isStopped:      true,
-		lastMouseEvent: MouseEvent{},
-	}
+	mobileRuntime := _runtimeInstance.(*mobileRuntime)
+	mobileRuntime.app = app
+	mobileRuntime.lastMouseEvent = MouseEvent{}
+	mobileRuntime.isPaused = true
+	mobileRuntime.isStopped = true
 	defer dispose()
+
+	// Init plugins
+	initPlugins()
 
 	// -------------------------------------------------------------------- //
 	// Ticker Loop

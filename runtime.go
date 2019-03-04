@@ -1,4 +1,5 @@
 // Copyright (c) 2019 Thomas MILLET. All rights reserved.
+
 package tge
 
 import (
@@ -7,6 +8,13 @@ import (
 	sync "sync"
 	time "time"
 )
+
+// Runtime singleton
+var _runtimeInstance Runtime
+
+// -------------------------------------------------------------------- //
+// API
+// -------------------------------------------------------------------- //
 
 // App defines API to implement for TGE applications
 type App interface {
@@ -25,10 +33,8 @@ type Listener func(event Event) bool
 
 // Runtime API
 type Runtime interface {
-	Use(plugin Plugin)
 	GetAsset(path string) ([]byte, error)
 	GetHost() interface{}
-	GetPlugin(name string) Plugin
 	GetRenderer() interface{}
 	Subscribe(channel string, listener Listener)
 	Unsubscribe(channel string, listener Listener)
@@ -36,12 +42,51 @@ type Runtime interface {
 	Stop()
 }
 
+// -------------------------------------------------------------------- //
+// Plugins
+// -------------------------------------------------------------------- //
+
 // Plugin API
 type Plugin interface {
 	Init(runtime Runtime) error
 	GetName() string
 	Dispose()
 }
+
+// Inner map of plugins
+var plugins = make(map[string]Plugin)
+
+// Register a plugin
+func Register(plugin Plugin) {
+	name := plugin.GetName()
+	if _, found := plugins[name]; !found {
+		plugins[name] = plugin
+		fmt.Printf("Plugin %s registered\n", name)
+	}
+}
+
+func initPlugins() {
+	for _, plugin := range plugins {
+		err := plugin.Init(_runtimeInstance)
+		if err != nil {
+			fmt.Printf("Failed to initialize plugin %s: %v\n", plugin.GetName(), err)
+			panic(err)
+		}
+		fmt.Printf("Plugin %s loaded\n", plugin.GetName())
+	}
+}
+
+// Global dispose
+func dispose() {
+	for _, plugin := range plugins {
+		plugin.Dispose()
+		fmt.Printf("Plugin %s released\n", plugin.GetName())
+	}
+}
+
+// -------------------------------------------------------------------- //
+// Events
+// -------------------------------------------------------------------- //
 
 // Type used in events to indicate type of action
 type Type byte
@@ -124,22 +169,6 @@ func (e KeyEvent) Channel() string {
 	return "key"
 }
 
-// Inner map of plugins
-var plugins = make(map[string]Plugin)
-
-func use(plugin Plugin, runtime Runtime) {
-	name := plugin.GetName()
-	if _, found := plugins[name]; !found {
-		plugins[name] = plugin
-		err := plugin.Init(runtime)
-		if err != nil {
-			fmt.Println(err)
-			panic(err)
-		}
-		fmt.Printf("Plugin %s loaded\n", name)
-	}
-}
-
 // Inner map of listeners
 var listeners = make(map[string][]Listener)
 
@@ -168,13 +197,6 @@ func publish(event Event) {
 				break
 			}
 		}
-	}
-}
-
-// Global dispose
-func dispose() {
-	for _, plugin := range plugins {
-		plugin.Dispose()
 	}
 }
 
