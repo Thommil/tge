@@ -7,7 +7,7 @@ package tge
 import (
 	fmt "fmt"
 	ioutil "io/ioutil"
-	"math"
+	math "math"
 	sync "sync"
 	time "time"
 

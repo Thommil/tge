@@ -35,7 +35,7 @@ interface Plugin{
 }
 
 class "tge-*" << (P,#FF7700) Packages >> {
-    GetInstance() Plugin
+    Load() Plugin
 }
 
 ' Relations
