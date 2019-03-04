@@ -89,9 +89,6 @@ func Run(app App) error {
 	mobileRuntime.isStopped = true
 	defer dispose()
 
-	// Init plugins
-	initPlugins()
-
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
 	// -------------------------------------------------------------------- //
@@ -127,6 +124,10 @@ func Run(app App) error {
 				case lifecycle.StageFocused:
 					mobileRuntime.context, _ = e.DrawContext.(gl.Context)
 					mobileRuntime.host = a
+
+					// Init plugins
+					initPlugins()
+
 					err := app.OnStart(mobileRuntime)
 					if err != nil {
 						fmt.Println(err)
@@ -152,6 +153,9 @@ func Run(app App) error {
 					close(moveEvtChan)
 					app.OnStop()
 					mobileRuntime.context = nil
+
+					// Release plugins
+					dispose()
 				}
 
 			case paint.Event:
