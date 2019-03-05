@@ -1,7 +1,6 @@
 # TODO
 ## Issues
  * No touch event on mobile browser (tge)
- * Normalize scroll (tge)
 
 ## Features
 ### P0

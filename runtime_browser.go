@@ -6,6 +6,7 @@ package tge
 
 import (
 	fmt "fmt"
+	math "math"
 	sync "sync"
 	js "syscall/js"
 	time "time"
@@ -298,9 +299,12 @@ func Run(app App) error {
 		wheelEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
+				event.Call("preventDefault")
+				x := float64(event.Get("deltaX").Int())
+				y := float64(event.Get("deltaY").Int())
 				publish(ScrollEvent{
-					X: int32(event.Get("deltaX").Int()),
-					Y: -int32(event.Get("deltaY").Int()),
+					X: int32(x / math.Abs(x)),
+					Y: -int32(y / math.Abs(y)),
 				})
 			}
 			return false
