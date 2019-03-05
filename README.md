@@ -5,6 +5,8 @@
 
 See it in action in [tge-examples](https://github.com/thommil/tge-examples) and look below for more details.
 
+An online demo (Work in Progress) is also available here : [http://tge-demo.thommil.com](http://tge-demo.thommil.com)
+
 ## TGE Core 
 Core implements a minimal runtime for several platforms:
   * Windows, MacOS & Linux
@@ -12,9 +14,9 @@ Core implements a minimal runtime for several platforms:
   * Web on Chrome, Firefox & Safari
 
 
-<p style="text-align:center">
+<div style="text-align:center">
 <img src="https://raw.githubusercontent.com/thommil/tge/master/specs/api.png"/>
-</p>
+</div>
 
 ## TGE plugins
 Plugins then allow to create your game/application by choosing implementation of different parts (GUI, rendering, sound...). If a library needs a custom implementation to run on each target, I try to create the associated plugin, if not, just import it by yourself (ex: physics, AI...). This way, **you choose** how to create your game/application. 

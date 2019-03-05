@@ -1,8 +1,7 @@
 # TODO
 ## Issues
  * No touch event on mobile browser (tge)
- * Windows events/lifecycle (tge)
- * Assets path on windows (tge)
+ * Normalize scroll (tge)
 
 ## Features
 ### P0
