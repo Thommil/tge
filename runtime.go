@@ -16,13 +16,30 @@ var _runtimeInstance Runtime
 // API
 // -------------------------------------------------------------------- //
 
-// App defines API to implement for TGE applications
+// App is the main entry point of a TGE Application. Created using TGE Command Line Tools.
+//
+// See generated app.go then for more details and explanations.
 type App interface {
+	// OnCreate is called at App instanciation, the rnutime resources are not
+	// yet available. Settings and treatments not related to runtime should be done here.
 	OnCreate(settings *Settings) error
+
+	// OnStart is called when all runtime resources are available but looping as not been
+	// started. Initializations should be done here.
 	OnStart(runtime Runtime) error
+
+	// OnResume is called just after OnStart and also when the runtime is awaken after a OnPause.
+	// This behaviour is similar to Android one.
 	OnResume()
+
+	// OnRender is called each time the graphical context is redrawn. This method should only implement
+	// graphical calls and not logical ones. The mutex allows to synchronize critical path with Tick loop.
 	OnRender(elaspedTime time.Duration, mutex *sync.Mutex)
+
+	// OnTick is called at a rate defined in settings, logical operations should be done here like physics, AI
+	// or any background task not relatd to graphics. The mutex allows to synchronize critical path with Render loop.
 	OnTick(elaspedTime time.Duration, mutex *sync.Mutex)
+
 	OnPause()
 	OnStop()
 	OnDispose() error

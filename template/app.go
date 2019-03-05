@@ -18,9 +18,6 @@ func (app *App) OnStart(runtime tge.Runtime) error {
 	return nil
 }
 
-func (app *App) OnResize(width int, height int) {
-}
-
 func (app *App) OnResume() {
 }
 
@@ -28,15 +25,6 @@ func (app *App) OnRender(elapsedTime time.Duration, mutex *sync.Mutex) {
 }
 
 func (app *App) OnTick(elapsedTime time.Duration, mutex *sync.Mutex) {
-}
-
-func (app *App) OnMouseEvent(event tge.MouseEvent) {
-}
-
-func (app *App) OnScrollEvent(event tge.ScrollEvent) {
-}
-
-func (app *App) OnKeyEvent(event tge.KeyEvent) {
 }
 
 func (app *App) OnPause() {
