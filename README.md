@@ -54,6 +54,8 @@ Target allows to build your application for Desktop, Mobile or Web backend. See 
 
 # Coding
 ## Applications
+WIP 
+
 The main entry point
 
 ```golang
@@ -100,12 +102,11 @@ func main() {
 ```
 
 ## Plugins
+WIP 
+
 It's also possible to create new TGE plugins for sharing or to defines dedicated libraris accross your applications.
 
 The paradigm of plugins is really simple, the code below:
-// Copyright 2016 The G3N Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
 
 ```golang
 package myplugin
@@ -134,4 +135,6 @@ func (p *plugin) Dispose() {
 ```
 
 ## Targeting platform
+WIP 
+
 To define dedicated code to a specific platform, use the ***build*** preprocessing instruction of Go:
