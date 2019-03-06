@@ -48,10 +48,11 @@ type App interface {
 	OnStop()
 
 	// OnDispose is called when all exit treatments are done for cleaning task (memory, tmp files ...)
-	OnDispose() error
+	OnDispose()
 }
 
-// Listener is the callback definition for publish/subscribe
+// Listener is the callback definition for publish/subscribe, the return value indicates if the event has been consumed (true)
+// and propagation stopped, in other case the next registered Listener is called
 type Listener func(event Event) bool
 
 // Runtime defines the commmon API across runtimes implementations
