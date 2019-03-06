@@ -302,9 +302,15 @@ func Run(app App) error {
 				event.Call("preventDefault")
 				x := float64(event.Get("deltaX").Int())
 				y := float64(event.Get("deltaY").Int())
+				if x != 0 {
+					x = x / math.Abs(x)
+				}
+				if y != 0 {
+					y = y / math.Abs(y)
+				}
 				publish(ScrollEvent{
-					X: int32(x / math.Abs(x)),
-					Y: -int32(y / math.Abs(y)),
+					X: int32(x),
+					Y: -int32(y),
 				})
 			}
 			return false

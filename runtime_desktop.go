@@ -244,9 +244,15 @@ func Run(app App) error {
 				if (settings.EventMask & ScrollEventEnabled) != 0 {
 					x := float64(t.X)
 					y := float64(t.Y)
+					if x != 0 {
+						x = x / math.Abs(x)
+					}
+					if y != 0 {
+						y = y / math.Abs(y)
+					}
 					publish(ScrollEvent{
-						X: int32(x / math.Abs(x)),
-						Y: int32(y / math.Abs(y)),
+						X: int32(x),
+						Y: int32(y),
 					})
 				}
 			case *sdl.KeyboardEvent:
