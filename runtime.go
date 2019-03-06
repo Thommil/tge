@@ -18,44 +18,66 @@ var _runtimeInstance Runtime
 
 // App is the main entry point of a TGE Application. Created using TGE Command Line Tools.
 //
-// See generated app.go then for more details and explanations.
+// See generated app.go by tge-cli for more details and explanations.
 type App interface {
-	// OnCreate is called at App instanciation, the rnutime resources are not
-	// yet available. Settings and treatments not related to runtime should be done here.
+	// OnCreate is called at App instanciation, the Runtime resources are not
+	// yet available. Settings and treatments not related to Runtime should be done here.
 	OnCreate(settings *Settings) error
 
-	// OnStart is called when all runtime resources are available but looping as not been
-	// started. Initializations should be done here.
+	// OnStart is called when all Runtime resources are available but looping as not been
+	// started. Initializations should be done here (GL conf, physics engine ...).
 	OnStart(runtime Runtime) error
 
-	// OnResume is called just after OnStart and also when the runtime is awaken after a OnPause.
-	// This behaviour is similar to Android one.
+	// OnResume is called just after OnStart and also when the Runtime is awaken after a pause.
 	OnResume()
 
-	// OnRender is called each time the graphical context is redrawn. This method should only implement
-	// graphical calls and not logical ones. The mutex allows to synchronize critical path with Tick loop.
+	// OnRender is called each time the graphical context is redrawn. This method should only implements
+	// graphical calls and not logical ones. The mutex allows to synchronize critical path with Tick() loop.
 	OnRender(elaspedTime time.Duration, mutex *sync.Mutex)
 
 	// OnTick is called at a rate defined in settings, logical operations should be done here like physics, AI
-	// or any background task not relatd to graphics. The mutex allows to synchronize critical path with Render loop.
+	// or any background task not relatd to graphics. The mutex allows to synchronize critical path with Render() loop.
 	OnTick(elaspedTime time.Duration, mutex *sync.Mutex)
 
+	// OnPause is called when the Runtime lose focus (alt-tab, home button, tab change ...) This is a good nrty point to
+	// set and display a pause screen
 	OnPause()
+
+	// OnStop is called when the Runtime is ending, context saving should be done here. On current Android version this
+	// handler is also called when the application is paused (and restart after).
 	OnStop()
+
+	// OnDispose is called when all exit treatments are done for cleaning task (memory, tmp files ...)
 	OnDispose() error
 }
 
-// Listener is the callback definition for pubsub model
+// Listener is the callback definition for publish/subscribe
 type Listener func(event Event) bool
 
-// Runtime API
+// Runtime defines the commmon API across runtimes implementations
 type Runtime interface {
+	// GetAsset retrieves assets in []byte form, assets are always stored in
+	// package asset folder independently of the target
 	GetAsset(path string) ([]byte, error)
+
+	// GetHost is for low level and target specific implementation and allows to
+	// retrieve the underlying backend of the Runtime (see package description)
 	GetHost() interface{}
+
+	// GetRenderer is for low level and target specific implementation and allows to
+	// retrieve the underlying graphical context of the Runtime (see package description)
 	GetRenderer() interface{}
+
+	// Subscribe register a new Listener to specified channel
 	Subscribe(channel string, listener Listener)
+
+	// Unsubscribe deregister a new Listener from specified channel
 	Unsubscribe(channel string, listener Listener)
+
+	// Publish send an Event on channel defined in the Event.Channel()
 	Publish(event Event)
+
+	// Stop allows App to end the Runtime directly
 	Stop()
 }
 
@@ -63,17 +85,24 @@ type Runtime interface {
 // Plugins
 // -------------------------------------------------------------------- //
 
-// Plugin API
+// Plugin interface defines the API used by the Runtime to handle plugins
 type Plugin interface {
+	// Init is called before Runtime looping
 	Init(runtime Runtime) error
+
+	// GetName allows Runtime to identify plugin by its name
 	GetName() string
+
+	// Dispose is called at end of Runtime before exiting
 	Dispose()
 }
 
 // Inner map of plugins
 var plugins = make(map[string]Plugin)
 
-// Register a plugin
+// Register a plugin in Runtime, this function should only be called
+// in the Go init() function of plugins to allow registration of plugins
+// before looping. In other case, the Init() method of plugins are never called.
 func Register(plugin Plugin) {
 	name := plugin.GetName()
 	if _, found := plugins[name]; !found {
@@ -105,26 +134,29 @@ func dispose() {
 // Events
 // -------------------------------------------------------------------- //
 
-// Type used in events to indicate type of action
+// Type is a component of events to indicate a generic way of defining an
+// event action.
 type Type byte
 
-// Button used in MouseEvent to indicate button
+// Button indicates the type of button or touch used in event
 type Button byte
 
-// KeyCode based on gomobile ones, sued for key mapping
+// KeyCode is used to map raw key codes values
 type KeyCode int
 
+// Buttons values
 const (
 	// ButtonNone Button for not available or not applicable
 	ButtonNone Button = 0
-	// ButtonLeft Button for left button
+	// ButtonLeft Button for left button, first finger touch
 	ButtonLeft Button = 1
-	// ButtonMiddle Button for middle button
+	// ButtonMiddle Button for middle button, second finger touch
 	ButtonMiddle Button = 2
-	// ButtonRight Button for right button
+	// ButtonRight Button for right button, third finger touch
 	ButtonRight Button = 3
 )
 
+// Types values
 const (
 	// TypeNone Type for not available or not applicable
 	TypeNone Type = 0
@@ -136,52 +168,55 @@ const (
 	TypeMove Type = 3
 )
 
-// Event interface definition
+// Events interface defines an event base by its channel
 type Event interface {
-	// Type defines an unitary keywork/channel for event
+	// Type defines a unique keywork/channel for event
 	Channel() string
 }
 
-// ResizeEvent definition
+// ResizeEvent is triggered when TGE painting area is resized
 type ResizeEvent struct {
 	Width, Height int32
 }
 
-// Channel of ResizeEvent
+// Channel of ResizeEvent = "resize"
 func (e ResizeEvent) Channel() string {
 	return "resize"
 }
 
-// MouseEvent definition
+// MouseEvent is triggered on mouse/touch down/up event and
+// mouse motion event too
 type MouseEvent struct {
 	X, Y   int32
 	Button Button
 	Type   Type
 }
 
-// Channel of MouseEvent
+// Channel of MouseEvent = "mouse"
 func (e MouseEvent) Channel() string {
 	return "mouse"
 }
 
-// ScrollEvent definition
+// ScrollEvent is called only on desktop/browser, X/Y values are
+// only [-1, 0, 1] to normalize scrolling accross targets
 type ScrollEvent struct {
 	X, Y int32
 }
 
-// Channel of ScrollEvent
+// Channel of ScrollEvent = "scroll"
 func (e ScrollEvent) Channel() string {
 	return "scroll"
 }
 
-// KeyEvent definition
+// KeyEvent defines a down/up key event, the Key attribute is portable
+// accross targets, the Value is the string representation of the key
 type KeyEvent struct {
 	Key   KeyCode
 	Value string
 	Type  Type
 }
 
-// Channel of KeyEvent
+// Channel of KeyEvent = "key"
 func (e KeyEvent) Channel() string {
 	return "key"
 }
@@ -372,7 +407,7 @@ const (
 	KeyCodeCompose KeyCode = 0x10000
 )
 
-// IsValid indicates a supported KeyCode
+// IsValid indicates a recongonized/valid KeyCode
 func (k KeyCode) IsValid() bool {
 	return k != KeyCodeUnknown
 }

@@ -13,6 +13,7 @@ package tge
 import (
 	fmt "fmt"
 	ioutil "io/ioutil"
+	math "math"
 	os "os"
 	path "path"
 	filepath "path/filepath"
@@ -241,9 +242,11 @@ func Run(app App) error {
 				}
 			case *sdl.MouseWheelEvent:
 				if (settings.EventMask & ScrollEventEnabled) != 0 {
+					x := float64(t.X)
+					y := float64(t.Y)
 					publish(ScrollEvent{
-						X: t.X,
-						Y: t.Y,
+						X: int32(x / math.Abs(x)),
+						Y: int32(y / math.Abs(y)),
 					})
 				}
 			case *sdl.KeyboardEvent:

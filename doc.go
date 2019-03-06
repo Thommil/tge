@@ -3,7 +3,8 @@
 /*
 TGE Core contains interfaces and core implementation for supported targets:
  - desktop : MacOS, Linux, Windows
- - mobile  : Android, IOS
+ - android : Android 5+
+ - ios     : IOS 8+ (Work in progress)
  - browser : Chrome, Firefox, Safari (limited support)
 
 TGE Core should not be used directly, it only defines interfaces and is used
@@ -12,9 +13,9 @@ by TGE Command Line Tool :
 
 App
 
-An App is the main entry point of TGE, the main function should normally just
-start the Runtime, any other code not handled by the it is not portable through
-targets
+An App is the main entry point of TGE, the main() function should normally just
+starts the Runtime, any other code not handled by the Runtime is potenitally
+not portable:
 
  import "github.com/thommil/tge"
 
@@ -27,30 +28,30 @@ generated app.go using tge-cli.
 
 Runtime
 
-The Runtime instance is initialized through the Run function of main package. At
+The Runtime instance is initialized through the Run(*App) function of main package. At
 startup, the Runtime looks for registered plugins and initializes them. Then the
-App instance is initialized and events loops start.
+App instance is initialized and started.
 
 The Runtime instance also exposes API for loading assets and subscribing to events
-in a generic approach.
+in a generic way.
 
 Runtime exposes none portable objects like Host (backend) and Renderer (graphical context),
-they can be used to implement custom behaviour depending on target (see below), the
+they can be used to implement custom behaviour depending on target in Apps or Plugins, the
 implementations are as follows:
 
  Host:
-  - desktop : SDL2 from https://github.com/veandco/go-sdl2
-  - android/ios: Custom Gomobile from https://github.com/thommil/tge-mobile
-  - browser: WebAssembly based on Golang 1.12 implementation
+  - desktop      : *sdl.Window - SDL2 from https://github.com/veandco/go-sdl2
+  - android/ios  : mobile.App  - Custom gomobile from https://github.com/thommil/tge-mobile
+  - browser      : *js.Value   - Gobal element through WebAssembly from Go 1.12
 
  Renderer:
-  - desktop: go-gl from https://github.com/go-gl/gl
-  - android/ios: Custom Gomobile from https://github.com/thommil/tge-mobile
-  - browser: WebGL/WebGL2 through WebAssembly based on Golang 1.12 implementation
+  - desktop      : *sdl.GLContext - SDL2 from https://github.com/veandco/go-sdl2
+  - android/ios  : gl.Context     - Custom gomobile from https://github.com/thommil/tge-mobile
+  - browser      : *js.Value      - WebGL/WebGL2 context through WebAssembly from Go 1.12
 
 Events
 
-Minimal set of events is handled by Runtime on the most possible portable way. Events
+Minimal set of events is handled by Runtime at the most possible portable way. Events
 are then propagated through publish/subscribe:
 
  Subscribe(channel string, listener Listener)
@@ -59,22 +60,22 @@ are then propagated through publish/subscribe:
 
 Events are in their raw form (ie modifiers or gestures are not handled). It's up to the
 application to implement specific needs. The aim of this approach is to keep the runtime
-generic and performant by limiting treatments is they are not needed.
+generic and fast by limiting treatments.
 
 A dedicated plugin to generate advanced events will be available soon.
 
 Plugins
 
 As TGE core is intended to be as light as possible, all heavy treatments are deported to
-plugins. The goal is to offer portable API accross Plugins by relying on Runtime.
+plugins. The goal is to offer a portable API from Plugins by relying on Runtime.
 
 Plugins are automatically registered at Go init() step, to use it, just import them as
-standard Go packages:
+standard Go packages, ex:
 
  import "github.com/thommil/tge-gl"
 
- func foo(){
-	 gl.DoSomething()
+ func (app *App) OnStart(runtime tge.Runtime) error{
+	 gl.ClearColor(0, 0, 0, 1)
  }
 
 It's also possible to create custom plugins by implementing Plugin interface and
@@ -104,7 +105,7 @@ registering it in the Go init() function :
  }
 
  func (p *plugin) Dispose() {
-	 // Ddispose code HERE if needed
+	 // Dispose code HERE if needed
  }
 
 Targeting platform and Debug Mode
