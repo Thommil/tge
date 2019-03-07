@@ -6,7 +6,7 @@
 **TGE** runtime benefits from powerful channels paradigm of Go to propose rendering accross 2 synchronized loops Ticker and Render:
 
 <div style="text-align:center; width:100%">
-<img src="https://raw.githubusercontent.com/thommil/tge/master/specs/tge-rendering.png"/>
+<img src="https://github.com/Thommil/tge/raw/master/specs/tge-rendering.png"/>
 </div>
 
 See it in action in [tge-examples](https://github.com/thommil/tge-examples) and look below for more details.
