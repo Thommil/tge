@@ -69,7 +69,7 @@ type App interface {
 	// The syncChan is used to notify Render() loop with draw commands.
 	OnTick(elaspedTime time.Duration, syncChan chan<- interface{})
 
-	// OnPause is called when the Runtime lose focus (alt-tab, home button, tab change ...) This is a good nrty point to
+	// OnPause is called when the Runtime lose focus (alt-tab, home button, tab change ...) This is a good entry point to
 	// set and display a pause screen
 	OnPause()
 
@@ -198,7 +198,7 @@ func (e MouseEvent) Channel() string {
 }
 
 // ScrollEvent is called only on desktop/browser, X/Y values are
-// only [-1, 0, 1] to normalize scrolling accross targets
+// only [-1, 0, 1] to normalize scrolling across targets
 type ScrollEvent struct {
 	X, Y int32
 }
@@ -209,7 +209,7 @@ func (e ScrollEvent) Channel() string {
 }
 
 // KeyEvent defines a down/up key event, the Key attribute is portable
-// accross targets, the Value is the string representation of the key
+// across targets, the Value is the string representation of the key
 type KeyEvent struct {
 	Key   KeyCode
 	Value string
