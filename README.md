@@ -1,13 +1,14 @@
-# TGE - Portable Runtime in GO
+<h1 align="center">TGE - Portable Runtime in GO</h1>
+
 **TGE** aims to provide a light, portable and unopiniated runtime to integrate your favorite Go libraries (at least mines) to portable applications (dektop, web & mobile).
 
 **TGE** is not and should not be another new game engine but instead a way to focus on business code and not low level pipes and hacks. The core is intended to be as light as possible and depends on plugins to enable cool features (OpenGL, AL, Vulkan, GUI...)
 
 **TGE** runtime benefits from powerful channels paradigm of Go to propose rendering accross 2 synchronized loops Ticker and Render:
 
-<div style="text-align:center; width:100%">
+<p align="center">
 <img src="https://github.com/Thommil/tge/raw/master/specs/tge-rendering.png"/>
-</div>
+</p>
 
 See it in action in [tge-examples](https://github.com/thommil/tge-examples) and look below for more details.
 
@@ -20,9 +21,9 @@ Core implements a minimal runtime for several platforms:
   * Web on Chrome, Firefox & Safari
 
 
-<div style="text-align:center; width:100%">
+<p align="center">
 <img src="https://raw.githubusercontent.com/thommil/tge/master/specs/api.png"/>
-</div>
+</p>
 
 ## TGE plugins
 Plugins allow to create your game/application by choosing implementation for different parts (GUI, rendering, sound...). This way, **you choose** how to create your game/application. I'm trying to port as many features as I can in plugins, natively portable libraries are off course directly usable too (physics, AI...).
