@@ -30,8 +30,6 @@ type Settings struct {
 	Width int `json:"width" yaml:"width"`
 	// Height of the window if run windowed only
 	Height int `json:"height" yaml:"height"`
-	// TPS (ticks per seconds) target rate
-	TPS int `json:"tps" yaml:"tps"`
 	// EventMask allows to enabled/disable events receiver on Runtime
 	EventMask EventMask `json:"event_mask" yaml:"event_mask"`
 }
@@ -42,6 +40,5 @@ var defaultSettings = Settings{
 	Fullscreen: false,
 	Width:      640,
 	Height:     480,
-	TPS:        100,
 	EventMask:  AllEventsEnabled,
 }

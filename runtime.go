@@ -5,7 +5,6 @@ package tge
 import (
 	fmt "fmt"
 	reflect "reflect"
-	sync "sync"
 	time "time"
 )
 
@@ -15,45 +14,6 @@ var _runtimeInstance Runtime
 // -------------------------------------------------------------------- //
 // API
 // -------------------------------------------------------------------- //
-
-// App is the main entry point of a TGE Application. Created using TGE Command Line Tools.
-//
-// See generated app.go by tge-cli for more details and explanations.
-type App interface {
-	// OnCreate is called at App instanciation, the Runtime resources are not
-	// yet available. Settings and treatments not related to Runtime should be done here.
-	OnCreate(settings *Settings) error
-
-	// OnStart is called when all Runtime resources are available but looping as not been
-	// started. Initializations should be done here (GL conf, physics engine ...).
-	OnStart(runtime Runtime) error
-
-	// OnResume is called just after OnStart and also when the Runtime is awaken after a pause.
-	OnResume()
-
-	// OnRender is called each time the graphical context is redrawn. This method should only implements
-	// graphical calls and not logical ones. The mutex allows to synchronize critical path with Tick() loop.
-	OnRender(elaspedTime time.Duration, mutex *sync.Mutex)
-
-	// OnTick is called at a rate defined in settings, logical operations should be done here like physics, AI
-	// or any background task not relatd to graphics. The mutex allows to synchronize critical path with Render() loop.
-	OnTick(elaspedTime time.Duration, mutex *sync.Mutex)
-
-	// OnPause is called when the Runtime lose focus (alt-tab, home button, tab change ...) This is a good nrty point to
-	// set and display a pause screen
-	OnPause()
-
-	// OnStop is called when the Runtime is ending, context saving should be done here. On current Android version this
-	// handler is also called when the application is paused (and restart after).
-	OnStop()
-
-	// OnDispose is called when all exit treatments are done for cleaning task (memory, tmp files ...)
-	OnDispose()
-}
-
-// Listener is the callback definition for publish/subscribe, the return value indicates if the event has been consumed (true)
-// and propagation stopped, in other case the next registered Listener is called
-type Listener func(event Event) bool
 
 // Runtime defines the commmon API across runtimes implementations
 type Runtime interface {
@@ -80,6 +40,45 @@ type Runtime interface {
 
 	// Stop allows App to end the Runtime directly
 	Stop()
+}
+
+// Listener is the callback definition for publish/subscribe, the return value indicates if the event has been consumed (true)
+// and propagation stopped, in other case the next registered Listener is called
+type Listener func(event Event) bool
+
+// App is the main entry point of a TGE Application. Created using TGE Command Line Tools.
+//
+// See generated app.go by tge-cli for more details and explanations.
+type App interface {
+	// OnCreate is called at App instanciation, the Runtime resources are not
+	// yet available. Settings and treatments not related to Runtime should be done here.
+	OnCreate(settings *Settings) error
+
+	// OnStart is called when all Runtime resources are available but looping as not been
+	// started. Initializations should be done here (GL conf, physics engine ...).
+	OnStart(runtime Runtime) error
+
+	// OnResume is called just after OnStart and also when the Runtime is awaken after a pause.
+	OnResume()
+
+	// OnRender is called each time the graphical context is redrawn. This method should only implements
+	// graphical calls and not logical ones. The syncChan is used to wait for Tick() loop draw commands
+	OnRender(elaspedTime time.Duration, syncChan <-chan interface{})
+
+	// OnTick handles logical operations like physics, AI or any background task not relatd to graphics.
+	// The syncChan is used to notify Render() loop with draw commands.
+	OnTick(elaspedTime time.Duration, syncChan chan<- interface{})
+
+	// OnPause is called when the Runtime lose focus (alt-tab, home button, tab change ...) This is a good nrty point to
+	// set and display a pause screen
+	OnPause()
+
+	// OnStop is called when the Runtime is ending, context saving should be done here. On current Android version this
+	// handler is also called when the application is paused (and restart after).
+	OnStop()
+
+	// OnDispose is called when all exit treatments are done for cleaning task (memory, tmp files ...)
+	OnDispose()
 }
 
 // -------------------------------------------------------------------- //

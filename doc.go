@@ -49,6 +49,18 @@ implementations are as follows:
   - android/ios  : gl.Context     - Custom gomobile from https://github.com/thommil/tge-mobile
   - browser      : *js.Value      - WebGL/WebGL2 context through WebAssembly from Go 1.12
 
+Rendering
+
+TGE uses Go channel mechanism to handle rendering, two loops are running side by side:
+
+ - Ticker loop with Tick()   : handle CPU treatments (physics, AI, logical) and trigger rendering
+ - Render loop with Render() : handle GPU treatments (draw calls)
+
+Both loops are synchronized using a dedicated channel passed in parameter of each method. As this method
+allows to make CPU/GPU treatments asynchronous, shared objects between contexts must correctly handled to avoid
+conflicts. The sync channel is typed as interface{}, it can also be used to pass content and select specific treatments
+based on underlying interface type. See examples for more details.
+
 Events
 
 Minimal set of events is handled by Runtime at the most possible portable way. Events

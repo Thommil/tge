@@ -8,7 +8,6 @@ import (
 	fmt "fmt"
 	ioutil "io/ioutil"
 	math "math"
-	sync "sync"
 	time "time"
 
 	mobile "github.com/thommil/tge-mobile/app"
@@ -92,21 +91,14 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
 	// -------------------------------------------------------------------- //
-	mutex := &sync.Mutex{}
+	syncChan := make(chan interface{})
 	startTicker := func() {
-		tpsDelay := time.Duration(1000000000 / settings.TPS)
 		elapsedTpsTime := time.Duration(0)
 		for !mobileRuntime.isStopped {
 			if !mobileRuntime.isPaused {
 				now := time.Now()
-				app.OnTick(elapsedTpsTime, mutex)
-				elapsedTpsTime = tpsDelay - time.Since(now)
-				if elapsedTpsTime < 0 {
-					elapsedTpsTime = 0
-				}
-				time.Sleep(elapsedTpsTime)
-			} else {
-				time.Sleep(tpsDelay)
+				app.OnTick(elapsedTpsTime, syncChan)
+				elapsedTpsTime = time.Since(now)
 			}
 		}
 	}
@@ -162,7 +154,7 @@ func Run(app App) error {
 				if !mobileRuntime.isPaused {
 					if mobileRuntime.context != nil && !e.External {
 						now := time.Now()
-						app.OnRender(elapsedFpsTime, mutex)
+						app.OnRender(elapsedFpsTime, syncChan)
 						a.Publish()
 						elapsedFpsTime = time.Since(now)
 					}

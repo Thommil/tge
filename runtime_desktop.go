@@ -173,21 +173,14 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Ticker Loop
 	// -------------------------------------------------------------------- //
-	mutex := &sync.Mutex{}
-	tpsDelay := time.Duration(1000000000 / settings.TPS)
+	syncChan := make(chan interface{})
 	elapsedTpsTime := time.Duration(0)
 	go func() {
 		for !desktopRuntime.isStopped {
 			if !desktopRuntime.isPaused {
 				now := time.Now()
-				app.OnTick(elapsedTpsTime, mutex)
-				elapsedTpsTime = tpsDelay - time.Since(now)
-				if elapsedTpsTime < 0 {
-					elapsedTpsTime = 0
-				}
-				time.Sleep(elapsedTpsTime)
-			} else {
-				time.Sleep(tpsDelay)
+				app.OnTick(elapsedTpsTime, syncChan)
+				elapsedTpsTime = time.Since(now)
 			}
 		}
 	}()
@@ -268,7 +261,7 @@ func Run(app App) error {
 		}
 		if !desktopRuntime.isPaused {
 			now := time.Now()
-			app.OnRender(elapsedFpsTime, mutex)
+			app.OnRender(elapsedFpsTime, syncChan)
 			window.GLSwap()
 			elapsedFpsTime = time.Since(now)
 		}

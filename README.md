@@ -3,6 +3,12 @@
 
 **TGE** is not and should not be another new game engine but instead a way to focus on business code and not low level pipes and hacks. The core is intended to be as light as possible and depends on plugins to enable cool features (OpenGL, AL, Vulkan, GUI...)
 
+**TGE** runtime benefits from powerful channels paradigm of Go to propose rendering accross 2 synchronized loops Ticker and Render:
+
+<div style="text-align:center; width:100%">
+<img src="https://raw.githubusercontent.com/thommil/tge/master/specs/tge-rendering.png"/>
+</div>
+
 See it in action in [tge-examples](https://github.com/thommil/tge-examples) and look below for more details.
 
 An online demo (Work in Progress) is also available here : [http://tge-demo.thommil.com](http://tge-demo.thommil.com)
@@ -14,7 +20,7 @@ Core implements a minimal runtime for several platforms:
   * Web on Chrome, Firefox & Safari
 
 
-<div style="text-align:center">
+<div style="text-align:center; width:100%">
 <img src="https://raw.githubusercontent.com/thommil/tge/master/specs/api.png"/>
 </div>
 

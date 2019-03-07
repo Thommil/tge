@@ -5,8 +5,8 @@ interface App {
     OnCreate(Settings) error
     OnStart(Runtime) error
     OnResume()
-    OnRender(Duration, Mutex)
-    OnTick(Duration, Mutex)
+    OnRender(Duration, <-chan interface{})
+    OnTick(Duration, chan<- interface{})
     OnPause()
     OnStop()
     OnDispose()
