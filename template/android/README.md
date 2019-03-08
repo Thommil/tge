@@ -25,9 +25,13 @@ With -dev set (debug) :
 Without set (release) :
 ```
 /dist
- |-- android
-     |-- ${APP-NAME}-386.apk
-     |-- ${APP-NAME}-amd64.apk
-     |-- ${APP-NAME}-arm.apk
-     |-- ${APP-NAME}-arm64.apk
+|-- android
+    |-- ${APP-NAME}-386.apk
+    |-- ${APP-NAME}-amd64.apk
+    |-- ${APP-NAME}-arm.apk
+    |-- ${APP-NAME}-arm64.apk
 ```
+
+Assets are packaged in APK. 
+
+Signature options are not implemented yet but planned.

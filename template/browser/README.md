@@ -19,12 +19,13 @@ The following content must be uploaded to your Web server:
 
 ```
 /dist
- |-- browser
-     |-- favicon.ico
-     |-- index.html
-     |-- tge-min.js
-     |-- tge.css
-     |-- main.wasm
+|-- /browser
+    |-- /assets
+    |-- favicon.ico
+    |-- index.html
+    |-- tge-min.js
+    |-- tge.css
+    |-- main.wasm
 ```
 
 Use [goexec](https://github.com/shurcooL/goexec) to test:
