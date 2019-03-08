@@ -1,5 +1,10 @@
 <h1 align="center">TGE - Portable Runtime in GO</h1>
 
+ <p align="center">
+    <a href="https://godoc.org/github.com/thommil/tge"><img src="https://godoc.org/github.com/thommil/tge?status.svg" alt="Godoc"></img></a>
+    <a href="https://goreportcard.com/report/github.com/thommil/tge"><img src="https://goreportcard.com/badge/github.com/thommil/tge"  alt="Go Report Card"/></a>
+</p>
+
 **TGE** aims to provide a light, portable and unopiniated runtime to integrate your favorite Go libraries (at least mines) to portable applications (dektop, web & mobile) and package them in a proper way (not a mere executable).
 
 **TGE** is not and should not be another new game engine but instead a way to focus on business code and not low level pipes and hacks. The core is intended to be as light as possible and depends on plugins to enable cool features (OpenGL, AL, Vulkan, GUI...)
