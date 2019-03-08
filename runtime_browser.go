@@ -437,11 +437,11 @@ var keyMap = map[string]KeyCode{
 	".":     KeyCodeFullStop,           // .
 	"/":     KeyCodeSlash,              // /
 
-	"Divide":    KeyCodeKeypadSlash,       // /
-	"Multiply":  KeyCodeKeypadAsterisk,    // *
-	"Substract": KeyCodeKeypadHyphenMinus, // -
-	"Add":       KeyCodeKeypadPlusSign,    // +
-	"Decimal":   KeyCodeKeypadFullStop,    // .
+	"Divide":   KeyCodeKeypadSlash,       // /
+	"Multiply": KeyCodeKeypadAsterisk,    // *
+	"Subtract": KeyCodeKeypadHyphenMinus, // -
+	"Add":      KeyCodeKeypadPlusSign,    // +
+	"Decimal":  KeyCodeKeypadFullStop,    // .
 
 	"@": KeyCodeAt,                // @
 	">": KeyCodeGreaterThan,       // >

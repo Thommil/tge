@@ -85,7 +85,7 @@ func (app *App) OnTick(elaspedTime time.Duration, syncChan chan<- interface{}) {
 	// in Tick dedicated data, then copy data to Render dedicated data and send it through the syncChan.
 	//
 	// Tick loop is running in a dedicated Go routine, it's also possible to start subroutines in this loop to
-	// benefit from availble cores and increase treatment speed using map/reduce oriented algorithms.
+	// benefit from available cores and increase treatment speed using map/reduce oriented algorithms.
 	//
 	// Always send at least one object to syncChan to synchronize it with Render(), in other case the Tick() loop
 	// will be a simple infinite loop and your App will destroy your Desktop/Mobile/Browser
@@ -101,7 +101,7 @@ func (app *App) OnPause() {
 // OnStop is called when the Runtime is ending, context saving should be done here. On current Android version this
 // handler is also called when the application is paused (and restart after).
 func (app *App) OnStop() {
-	// This is where you backup everyting if needed (state machine, save ...) The runtime tries to call and execute
+	// This is where you backup everything if needed (state machine, save ...) The runtime tries to call and execute
 	// this method before leaving to allow proper exit but nothing is guaranteed on some targets (WEB)
 }
 
