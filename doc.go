@@ -1,7 +1,7 @@
 // Copyright (c) 2019 Thomas MILLET. All rights reserved.
 
 /*
-TGE Core contains interfaces and core implementation for supported targets:
+Package tge core contains interfaces and core implementation for supported targets:
  - desktop : MacOS, Linux, Windows
  - android : Android 5+
  - ios     : IOS 8+ (Work in progress)

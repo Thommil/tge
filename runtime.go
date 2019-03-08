@@ -168,7 +168,7 @@ const (
 	TypeMove Type = 3
 )
 
-// Events interface defines an event base by its channel
+// Event interface defines an event base by its channel
 type Event interface {
 	// Type defines a unique keywork/channel for event
 	Channel() string
