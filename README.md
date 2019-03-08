@@ -1,10 +1,10 @@
 <h1 align="center">TGE - Portable Runtime in GO</h1>
 
-**TGE** aims to provide a light, portable and unopiniated runtime to integrate your favorite Go libraries (at least mines) to portable applications (dektop, web & mobile).
+**TGE** aims to provide a light, portable and unopiniated runtime to integrate your favorite Go libraries (at least mines) to portable applications (dektop, web & mobile) and package them in a proper way (not a mere executable).
 
 **TGE** is not and should not be another new game engine but instead a way to focus on business code and not low level pipes and hacks. The core is intended to be as light as possible and depends on plugins to enable cool features (OpenGL, AL, Vulkan, GUI...)
 
-**TGE** runtime benefits from power	ful channels paradigm of Go to propose rendering accross 2 synchronized loops Ticker and Render:
+**TGE** runtime benefits from power	ful channels paradigm of Go to propose rendering across 2 synchronized loops Ticker and Render:
 
 <p align="center">
 <img src="https://github.com/Thommil/tge/raw/master/specs/tge-rendering.png"/>
@@ -187,37 +187,71 @@ func main() {
 ```
 
 ## Plugins
-It's also possible to create new TGE plugins for sharing or to defines dedicated libraries across your applications.
 
-The paradigm of plugins is really simple, the code below:
+To create new TGE plugins for sharing or to defines dedicated libraries across your applications, use the code below:
 
 ```golang
 package myplugin
 
 import (
+	// Always import TGE for initalization purpose
 	tge "github.com/thommil/tge"
 )
 
+// Plugin implementation, no need to expose
 type plugin struct {
 }
 
+// Go init function, register your plugin on TGE runtime HERE
 func init() {
 	tge.Register(plugin{})
 }
 
+// Init code of your plugin, called before runtime loops 
 func (p *plugin) Init(runtime tge.Runtime) error {
 	return nil
 }
 
+// GetName is used to identify the plugin in TGE registry
 func (p *plugin) GetName() string {
 	return "myplugin"
 }
 
+// Dispose allows to clean up plugin resources
 func (p *plugin) Dispose() {
 }
 ```
 
-## Targeting platform
-WIP 
+## Targeting platform and debug mode
 
-To define dedicated code to a specific platform, use the ***build*** preprocessing instruction of Go:
+It's possible to write code for a specific platform the same way TGE do it.
+
+For desktop, add the following Go build directives:
+
+```golang
+ // +build darwin freebsd linux windows
+ // +build !android
+ // +build !ios
+ // +build !js
+```
+
+for mobile (target android or ios is also possible):
+
+```golang
+ // +build android ios
+```
+
+and for browser:
+
+```golang
+ // +build js
+ ```
+
+At last, it's also possible to create a dedicated file for debugging purpose by
+adding:
+
+```golang
+ // +build debug
+ ```
+
+The file will be used if the -debug flag is set in tge-cli command line for build.
