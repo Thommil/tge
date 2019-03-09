@@ -61,6 +61,13 @@ allows to make CPU/GPU treatments asynchronous, shared objects between contexts 
 conflicts. The sync channel is typed as interface{}, it can also be used to pass content and select specific treatments
 based on underlying interface type. See examples for more details.
 
+A good candidate for copy if the reflect.Copy() function:
+
+ reflect.Copy(reflect.ValueOf(renderData), reflect.ValueOf(tickData))
+
+If your data is based on something else than slices but its size justifies low level memory copy, you can
+also put ticker data in a single element slice and use reflect.Copy() on it.
+
 Events
 
 Minimal set of events is handled by Runtime at the most possible portable way. Events
