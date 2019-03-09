@@ -120,31 +120,5 @@ registering it in the Go init() function :
 	 // Dispose code HERE if needed
  }
 
-Targeting platform and Debug Mode
-
-It's possible to write code for a specific platform the same way TGE do it.
-
-For desktop, add the following Go build directives:
-
- // +build darwin freebsd linux windows
- // +build !android
- // +build !ios
- // +build !js
-
-for mobile:
-
- // +build android ios
-
-and for browser:
-
- // +build js
-
-At last, it's also possible to create a dedicated file for debugging purpose by
-adding:
-
- // +build debug
-
-The file will be used if the -debug flag is set in tge-cli command line for build.
-
 */
 package tge // import "github.com/thommil/tge"
