@@ -157,6 +157,12 @@ func (app *App) OnTick(elaspedTime time.Duration, syncChan chan<- interface{}) {
 	// As data can be shared between Tick and Render loop, a good practice is too handle heavy treatments
 	// in Tick dedicated data, then copy data to Render dedicated data and send it through the syncChan.
 	//
+	// A good candidate for copy if the reflect.Copy() function:
+	//   reflect.Copy(reflect.ValueOf(renderData), reflect.ValueOf(tickData))
+	//
+	// If your data is based on something else than slices but its size justifies low level memory copy, you can
+	// also put ticker data in single element slice and use reflect.Copy().
+	//
 	// Tick loop is running in a dedicated Go routine, it's also possible to start subroutines in this loop to
 	// benefit from availble cores and increase treatment speed using map/reduce oriented algorithms.
 	//
