@@ -29,6 +29,9 @@ type Runtime interface {
 	// retrieve the underlying graphical context of the Runtime (see package description)
 	GetRenderer() interface{}
 
+	// GetSettings returns the current Runtime settings
+	GetSettings() Settings
+
 	// Subscribe register a new Listener to specified channel
 	Subscribe(channel string, listener Listener)
 

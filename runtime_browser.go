@@ -23,6 +23,7 @@ type browserRuntime struct {
 	ticker    *time.Ticker
 	canvas    *js.Value
 	jsTge     *js.Value
+	settings  Settings
 	isPaused  bool
 	isStopped bool
 	done      chan bool
@@ -91,6 +92,10 @@ func (runtime *browserRuntime) GetRenderer() interface{} {
 	return &glContext
 }
 
+func (runtime *browserRuntime) GetSettings() Settings {
+	return runtime.settings
+}
+
 func (runtime *browserRuntime) Subscribe(channel string, listener Listener) {
 	subscribe(channel, listener)
 }
@@ -119,8 +124,8 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Create
 	// -------------------------------------------------------------------- //
-	settings := &defaultSettings
-	err := app.OnCreate(settings)
+	settings := defaultSettings
+	err := app.OnCreate(&settings)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -143,6 +148,7 @@ func Run(app App) error {
 	browserRuntime.app = app
 	browserRuntime.canvas = &canvas
 	browserRuntime.jsTge = &jsTge
+	browserRuntime.settings = settings
 	browserRuntime.isPaused = true
 	browserRuntime.isStopped = true
 	browserRuntime.done = make(chan bool)

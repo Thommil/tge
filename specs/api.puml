@@ -24,6 +24,7 @@ interface Runtime {
     GetAsset(string) []byte, error
     GetHost() interface{}
     GetRenderer() interface{}
+    GetSettings() Settings
     Subscribe(string, Listener)
 	Unsubscribe(string, Listener)
     Publish(Event)

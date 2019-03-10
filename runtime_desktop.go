@@ -37,6 +37,7 @@ type desktopRuntime struct {
 	app        App
 	host       *sdl.Window
 	context    *sdl.GLContext
+	settings   Settings
 	isPaused   bool
 	isStopped  bool
 	assetsPath string
@@ -52,6 +53,10 @@ func (runtime *desktopRuntime) GetHost() interface{} {
 
 func (runtime *desktopRuntime) GetRenderer() interface{} {
 	return runtime.context
+}
+
+func (runtime *desktopRuntime) GetSettings() Settings {
+	return runtime.settings
 }
 
 func (runtime *desktopRuntime) Subscribe(channel string, listener Listener) {
@@ -80,8 +85,8 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Create
 	// -------------------------------------------------------------------- //
-	settings := &defaultSettings
-	err := app.OnCreate(settings)
+	settings := defaultSettings
+	err := app.OnCreate(&settings)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -130,6 +135,7 @@ func Run(app App) error {
 	desktopRuntime.app = app
 	desktopRuntime.host = window
 	desktopRuntime.context = &context
+	desktopRuntime.settings = settings
 	desktopRuntime.isPaused = true
 	desktopRuntime.isStopped = true
 

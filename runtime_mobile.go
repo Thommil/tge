@@ -27,12 +27,13 @@ func init() {
 // Runtime implementation
 // -------------------------------------------------------------------- //
 type mobileRuntime struct {
-	app            App
-	host           mobile.App
-	isPaused       bool
-	isStopped      bool
-	context        gl.Context
-	lastMouseEvent MouseEvent
+	app             App
+	host            mobile.App
+	context         gl.Context
+	settings        Settings
+	isPaused        bool
+	isStopped       bool
+	lastMouseEvents []MouseEvent
 }
 
 func (runtime *mobileRuntime) GetAsset(p string) ([]byte, error) {
@@ -49,6 +50,10 @@ func (runtime *mobileRuntime) GetHost() interface{} {
 
 func (runtime *mobileRuntime) GetRenderer() interface{} {
 	return runtime.context
+}
+
+func (runtime *mobileRuntime) GetSettings() Settings {
+	return runtime.settings
 }
 
 func (runtime *mobileRuntime) Subscribe(channel string, listener Listener) {
@@ -72,8 +77,8 @@ func Run(app App) error {
 	// -------------------------------------------------------------------- //
 	// Create
 	// -------------------------------------------------------------------- //
-	settings := &defaultSettings
-	err := app.OnCreate(settings)
+	settings := defaultSettings
+	err := app.OnCreate(&settings)
 	if err != nil {
 		fmt.Println(err)
 		panic(err)
@@ -83,7 +88,8 @@ func Run(app App) error {
 	// Instanciate Runtime
 	mobileRuntime := _runtimeInstance.(*mobileRuntime)
 	mobileRuntime.app = app
-	mobileRuntime.lastMouseEvent = MouseEvent{}
+	mobileRuntime.settings = settings
+	mobileRuntime.lastMouseEvents = make([]MouseEvent, 5, 5)
 	mobileRuntime.isPaused = true
 	mobileRuntime.isStopped = true
 	defer dispose()
@@ -169,13 +175,13 @@ func Run(app App) error {
 				case touch.TypeBegin:
 					// mouse down
 					if (settings.EventMask & MouseButtonEventEnabled) != 0 {
-						mobileRuntime.lastMouseEvent.X = int32(e.X)
-						mobileRuntime.lastMouseEvent.Y = int32(e.Y)
+						mobileRuntime.lastMouseEvents[e.Sequence].X = int32(e.X)
+						mobileRuntime.lastMouseEvents[e.Sequence].Y = int32(e.Y)
 						go publish(MouseEvent{
-							X:      mobileRuntime.lastMouseEvent.X,
-							Y:      mobileRuntime.lastMouseEvent.Y,
+							X:      int32(e.X),
+							Y:      int32(e.Y),
 							Type:   TypeDown,
-							Button: ButtonNone,
+							Button: Button(e.Sequence + 1),
 						})
 					}
 				case touch.TypeMove:
@@ -184,26 +190,28 @@ func Run(app App) error {
 						go func() {
 							x := int32(e.X)
 							y := int32(e.Y)
-							if math.Abs(float64(mobileRuntime.lastMouseEvent.X-x)) > float64(1) || math.Abs(float64(mobileRuntime.lastMouseEvent.Y-y)) > float64(1) {
+							if math.Abs(float64(mobileRuntime.lastMouseEvents[e.Sequence].X-x)) > float64(1) || math.Abs(float64(mobileRuntime.lastMouseEvents[e.Sequence].Y-y)) > float64(1) {
 								moveEvtChan <- MouseEvent{
 									X:      x,
 									Y:      y,
 									Type:   TypeMove,
-									Button: ButtonNone,
+									Button: Button(e.Sequence + 1),
 								}
 							}
+							mobileRuntime.lastMouseEvents[e.Sequence].X = int32(e.X)
+							mobileRuntime.lastMouseEvents[e.Sequence].Y = int32(e.Y)
 						}()
 					}
 				case touch.TypeEnd:
 					// Touch down
 					if (settings.EventMask & MouseButtonEventEnabled) != 0 {
-						mobileRuntime.lastMouseEvent.X = 0
-						mobileRuntime.lastMouseEvent.Y = 0
+						mobileRuntime.lastMouseEvents[e.Sequence].X = 0
+						mobileRuntime.lastMouseEvents[e.Sequence].Y = 0
 						go publish(MouseEvent{
 							X:      int32(e.X),
 							Y:      int32(e.Y),
 							Type:   TypeUp,
-							Button: ButtonNone,
+							Button: Button(e.Sequence + 1),
 						})
 					}
 				}

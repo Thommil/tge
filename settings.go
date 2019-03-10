@@ -17,7 +17,7 @@ const (
 	// KeyEventEnabled enabled key event receiver on App
 	KeyEventEnabled = 0x08
 	// AllEventsEnabled enables all input events on App
-	AllEventsEnabled = MouseButtonEventEnabled | MouseMotionEventEnabled | ScrollEventEnabled | KeyEventEnabled
+	AllEventsEnabled = 0xFFFF
 )
 
 // Settings definition of TGE application
