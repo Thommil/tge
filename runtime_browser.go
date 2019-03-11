@@ -267,6 +267,36 @@ func Run(app App) error {
 		defer mouseDownEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "mousedown", mouseDownEvtCb)
 
+		touchDownEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				event := args[0]
+				event.Call("preventDefault")
+				touchList := event.Get("touches")
+				touchListLen := touchList.Get("length").Int()
+				for i := 0; i < touchListLen; i++ {
+					button := ButtonNone
+					switch i {
+					case 0:
+						button = TouchFirst
+					case 1:
+						button = TouchSecond
+					case 2:
+						button = TouchThird
+					}
+					touch := touchList.Index(i)
+					publish(MouseEvent{
+						X:      int32(touch.Get("clientX").Int()),
+						Y:      int32(touch.Get("clientY").Int()),
+						Button: button,
+						Type:   TypeDown,
+					})
+				}
+			}
+			return false
+		})
+		defer touchDownEvtCb.Release()
+		browserRuntime.canvas.Call("addEventListener", "touchstart", touchDownEvtCb)
+
 		mouseUpEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
@@ -290,6 +320,36 @@ func Run(app App) error {
 		})
 		defer mouseUpEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "mouseup", mouseUpEvtCb)
+
+		touchUpEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				event := args[0]
+				event.Call("preventDefault")
+				touchList := event.Get("changedTouches")
+				touchListLen := touchList.Get("length").Int()
+				for i := 0; i < touchListLen; i++ {
+					button := ButtonNone
+					switch i {
+					case 0:
+						button = TouchFirst
+					case 1:
+						button = TouchSecond
+					case 2:
+						button = TouchThird
+					}
+					touch := touchList.Index(i)
+					publish(MouseEvent{
+						X:      int32(touch.Get("clientX").Int()),
+						Y:      int32(touch.Get("clientY").Int()),
+						Button: button,
+						Type:   TypeUp,
+					})
+				}
+			}
+			return false
+		})
+		defer touchUpEvtCb.Release()
+		browserRuntime.canvas.Call("addEventListener", "touchend", touchUpEvtCb)
 	}
 
 	// MouseMotionEventEnabled
@@ -308,6 +368,36 @@ func Run(app App) error {
 		})
 		defer mouseMoveEvtCb.Release()
 		browserRuntime.canvas.Call("addEventListener", "mousemove", mouseMoveEvtCb)
+
+		touchMoveEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			if !browserRuntime.isStopped && !browserRuntime.isPaused {
+				event := args[0]
+				event.Call("preventDefault")
+				touchList := event.Get("touches")
+				touchListLen := touchList.Get("length").Int()
+				for i := 0; i < touchListLen; i++ {
+					button := ButtonNone
+					switch i {
+					case 0:
+						button = TouchFirst
+					case 1:
+						button = TouchSecond
+					case 2:
+						button = TouchThird
+					}
+					touch := touchList.Index(i)
+					publish(MouseEvent{
+						X:      int32(touch.Get("clientX").Int()),
+						Y:      int32(touch.Get("clientY").Int()),
+						Button: button,
+						Type:   TypeMove,
+					})
+				}
+			}
+			return false
+		})
+		defer touchMoveEvtCb.Release()
+		browserRuntime.canvas.Call("addEventListener", "touchmove", touchMoveEvtCb)
 	}
 
 	// ScrollEvent
