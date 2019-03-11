@@ -7,7 +7,6 @@ package tge
 import (
 	fmt "fmt"
 	ioutil "io/ioutil"
-	math "math"
 	time "time"
 
 	mobile "github.com/thommil/tge-mobile/app"
@@ -27,13 +26,12 @@ func init() {
 // Runtime implementation
 // -------------------------------------------------------------------- //
 type mobileRuntime struct {
-	app             App
-	host            mobile.App
-	context         gl.Context
-	settings        Settings
-	isPaused        bool
-	isStopped       bool
-	lastMouseEvents []MouseEvent
+	app       App
+	host      mobile.App
+	context   gl.Context
+	settings  Settings
+	isPaused  bool
+	isStopped bool
 }
 
 func (runtime *mobileRuntime) GetAsset(p string) ([]byte, error) {
@@ -89,7 +87,6 @@ func Run(app App) error {
 	mobileRuntime := _runtimeInstance.(*mobileRuntime)
 	mobileRuntime.app = app
 	mobileRuntime.settings = settings
-	mobileRuntime.lastMouseEvents = make([]MouseEvent, 5, 5)
 	mobileRuntime.isPaused = true
 	mobileRuntime.isStopped = true
 	defer dispose()
@@ -175,44 +172,32 @@ func Run(app App) error {
 				case touch.TypeBegin:
 					// mouse down
 					if (settings.EventMask & MouseButtonEventEnabled) != 0 {
-						mobileRuntime.lastMouseEvents[e.Sequence].X = int32(e.X)
-						mobileRuntime.lastMouseEvents[e.Sequence].Y = int32(e.Y)
-						go publish(MouseEvent{
+						moveEvtChan <- MouseEvent{
 							X:      int32(e.X),
 							Y:      int32(e.Y),
 							Type:   TypeDown,
 							Button: Button(e.Sequence + 1),
-						})
+						}
 					}
 				case touch.TypeMove:
 					// mouse move
 					if (settings.EventMask & MouseMotionEventEnabled) != 0 {
-						go func() {
-							x := int32(e.X)
-							y := int32(e.Y)
-							if math.Abs(float64(mobileRuntime.lastMouseEvents[e.Sequence].X-x)) > float64(1) || math.Abs(float64(mobileRuntime.lastMouseEvents[e.Sequence].Y-y)) > float64(1) {
-								moveEvtChan <- MouseEvent{
-									X:      x,
-									Y:      y,
-									Type:   TypeMove,
-									Button: Button(e.Sequence + 1),
-								}
-							}
-							mobileRuntime.lastMouseEvents[e.Sequence].X = int32(e.X)
-							mobileRuntime.lastMouseEvents[e.Sequence].Y = int32(e.Y)
-						}()
+						moveEvtChan <- MouseEvent{
+							X:      int32(e.X),
+							Y:      int32(e.Y),
+							Type:   TypeMove,
+							Button: Button(e.Sequence + 1),
+						}
 					}
 				case touch.TypeEnd:
 					// Touch down
 					if (settings.EventMask & MouseButtonEventEnabled) != 0 {
-						mobileRuntime.lastMouseEvents[e.Sequence].X = 0
-						mobileRuntime.lastMouseEvents[e.Sequence].Y = 0
-						go publish(MouseEvent{
+						moveEvtChan <- MouseEvent{
 							X:      int32(e.X),
 							Y:      int32(e.Y),
 							Type:   TypeUp,
 							Button: Button(e.Sequence + 1),
-						})
+						}
 					}
 				}
 			}
