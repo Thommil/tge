@@ -150,26 +150,70 @@ type KeyCode int
 // Buttons values
 const (
 	// ButtonNone Button for not available or not applicable
-	ButtonNone Button = 0
-	// ButtonLeft Button for left button, first finger touch
-	ButtonLeft Button = 1
-	// ButtonMiddle Button for middle button, second finger touch
-	ButtonMiddle Button = 2
-	// ButtonRight Button for right button, third finger touch
-	ButtonRight Button = 3
+	ButtonNone Button = 0x00
+	// ButtonLeft Button for left button
+	ButtonLeft Button = 0x01
+	// ButtonRight Button for right button
+	ButtonRight Button = 0x02
+	// ButtonMiddle Button for middle button
+	ButtonMiddle Button = 0x04
+	// TouchFirst Button for first finger touch
+	TouchFirst Button = 0x10
+	// TouchSecond Button for second finger touch
+	TouchSecond Button = 0x20
+	// TouchThird Button for third finger touch
+	TouchThird Button = 0x40
+	// ButtonLeftOrTouchFirst helper to test left button or first touch
+	ButtonLeftOrTouchFirst Button = 0x11
 )
+
+// String is Stringer implementation of Button
+func (b Button) String() string {
+	switch b {
+	case ButtonNone:
+		return "ButtonNone"
+	case ButtonLeft:
+		return "ButtonLeft"
+	case ButtonRight:
+		return "ButtonRight"
+	case ButtonMiddle:
+		return "ButtonMiddle"
+	case TouchFirst:
+		return "TouchFirst"
+	case TouchSecond:
+		return "TouchSecond"
+	case TouchThird:
+		return "TouchThird"
+	}
+	return "unknown"
+}
 
 // Types values
 const (
 	// TypeNone Type for not available or not applicable
-	TypeNone Type = 0
+	TypeNone Type = 0x00
 	// TypeDown Type for pressed button/key/touch
-	TypeDown Type = 1
+	TypeDown Type = 0x01
 	// TypeUp Type for released button/key/touch
-	TypeUp Type = 2
+	TypeUp Type = 0x02
 	// TypeMove Type for mouse/touch move
-	TypeMove Type = 3
+	TypeMove Type = 0x04
 )
+
+// String is Stringer implementation of Type
+func (t Type) String() string {
+	switch t {
+	case TypeNone:
+		return "TypeNone"
+	case TypeDown:
+		return "TypeDown"
+	case TypeUp:
+		return "TypeUp"
+	case TypeMove:
+		return "TypeMove"
+	}
+	return "unknown"
+}
 
 // Event interface defines an event base by its channel
 type Event interface {

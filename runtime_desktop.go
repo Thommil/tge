@@ -223,11 +223,20 @@ func Run(app App) error {
 				}
 			case *sdl.MouseButtonEvent:
 				if (settings.EventMask & MouseButtonEventEnabled) != 0 {
+					button := ButtonNone
+					switch t.Button {
+					case 1:
+						button = ButtonLeft
+					case 2:
+						button = ButtonMiddle
+					case 3:
+						button = ButtonRight
+					}
 					publish(MouseEvent{
 						X:      t.X,
 						Y:      t.Y,
 						Type:   Type(t.Type),
-						Button: Button(t.Button),
+						Button: button,
 					})
 				}
 			case *sdl.MouseMotionEvent:

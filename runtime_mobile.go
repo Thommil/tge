@@ -168,6 +168,15 @@ func Run(app App) error {
 				publish(ResizeEvent{int32(e.WidthPx), int32(e.HeightPx)})
 
 			case touch.Event:
+				button := ButtonNone
+				switch e.Sequence {
+				case 0:
+					button = TouchFirst
+				case 1:
+					button = TouchSecond
+				case 2:
+					button = TouchThird
+				}
 				switch e.Type {
 				case touch.TypeBegin:
 					// mouse down
@@ -176,7 +185,7 @@ func Run(app App) error {
 							X:      int32(e.X),
 							Y:      int32(e.Y),
 							Type:   TypeDown,
-							Button: Button(e.Sequence + 1),
+							Button: button,
 						}
 					}
 				case touch.TypeMove:
@@ -186,7 +195,7 @@ func Run(app App) error {
 							X:      int32(e.X),
 							Y:      int32(e.Y),
 							Type:   TypeMove,
-							Button: Button(e.Sequence + 1),
+							Button: button,
 						}
 					}
 				case touch.TypeEnd:
@@ -196,7 +205,7 @@ func Run(app App) error {
 							X:      int32(e.X),
 							Y:      int32(e.Y),
 							Type:   TypeUp,
-							Button: Button(e.Sequence + 1),
+							Button: button,
 						}
 					}
 				}

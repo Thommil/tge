@@ -246,10 +246,19 @@ func Run(app App) error {
 		mouseDownEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
+				button := ButtonNone
+				switch event.Get("button").Int() {
+				case 0:
+					button = ButtonLeft
+				case 1:
+					button = ButtonMiddle
+				case 2:
+					button = ButtonRight
+				}
 				publish(MouseEvent{
 					X:      int32(event.Get("offsetX").Int()),
 					Y:      int32(event.Get("offsetY").Int()),
-					Button: Button(event.Get("button").Int() + 1),
+					Button: button,
 					Type:   TypeDown,
 				})
 			}
@@ -261,10 +270,19 @@ func Run(app App) error {
 		mouseUpEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			if !browserRuntime.isStopped && !browserRuntime.isPaused {
 				event := args[0]
+				button := ButtonNone
+				switch event.Get("button").Int() {
+				case 0:
+					button = ButtonLeft
+				case 1:
+					button = ButtonMiddle
+				case 2:
+					button = ButtonRight
+				}
 				publish(MouseEvent{
 					X:      int32(event.Get("offsetX").Int()),
 					Y:      int32(event.Get("offsetY").Int()),
-					Button: Button(event.Get("button").Int() + 1),
+					Button: button,
 					Type:   TypeUp,
 				})
 			}
