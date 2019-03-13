@@ -169,7 +169,7 @@ func Run(app App) error {
 	browserRuntime.isPaused = false
 
 	// Resize App
-	go publish(ResizeEvent{int32(browserRuntime.canvas.Get("clientWidth").Int()),
+	publish(ResizeEvent{int32(browserRuntime.canvas.Get("clientWidth").Int()),
 		int32(browserRuntime.canvas.Get("clientHeight").Int())})
 
 	// -------------------------------------------------------------------- //
@@ -210,8 +210,10 @@ func Run(app App) error {
 	// Focus
 	blurEvtCb := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if !browserRuntime.isStopped && !browserRuntime.isPaused {
-			browserRuntime.isPaused = true
-			browserRuntime.app.OnPause()
+			go func() {
+				browserRuntime.isPaused = true
+				browserRuntime.app.OnPause()
+			}()
 		}
 		return false
 	})

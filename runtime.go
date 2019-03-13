@@ -291,10 +291,21 @@ func unsubscribe(channel string, listener Listener) {
 
 func publish(event Event) {
 	if list, found := listeners[event.Channel()]; found {
-		for _, listener := range list {
-			if listener(event) {
-				break
+		switch event.(type) {
+		case ResizeEvent:
+			for _, listener := range list {
+				if listener(event) {
+					break
+				}
 			}
+		default:
+			go func() {
+				for _, listener := range list {
+					if listener(event) {
+						break
+					}
+				}
+			}()
 		}
 	}
 }

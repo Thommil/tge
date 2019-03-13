@@ -38,6 +38,7 @@ Plugin&nbsp;link&nbsp;&nbsp;&nbsp; | Details
 [tge-gesture](https://github.com/thommil/tge-gesture) | Gestures for touch screens with support for Android, IOS and mobile browsers. Implements longpress, swipe and pinch gestures.
 [tge-gl](https://github.com/thommil/tge-gl) | OpenGL/ES 3+ API based on [go-gl](https://github.com/go-gl/gl) work. Expose OpenGL to App in a portable way, il you want a low level access to the graphical context. Needed by most graphical libraries and plugins.
 [tge-g3n](https://github.com/thommil/tge-g3n) | Based on the awesome [G3N](https://github.com/g3n/engine) game engine written in Go. This great piece of software engineering is brought to Mobile and Web by TGE.
+[tge-audio](https://github.com/thommil/tge-audio) | Audio support based on [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API). Brings full support for sound effects and spacialization with a comprehensive API ;)
 
 # Getting started
 Based on what is done with tools like Vue.js, Node or Spring, TGE offers a command line tool [tge-cli](https://github.com/thommil/tge-cli) to ease creation and build of TGE applications.

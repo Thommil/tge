@@ -76,6 +76,25 @@
             }
         },
 
+        createAudioBuffer(audioCtx, path, callback) {
+            fetch('./assets/' + path).then((response) => {
+                if(response.ok) {                    
+                    return response.arrayBuffer()           
+                } else {
+                    throw new Error(response.statusText)
+                }
+            })
+            .then((audioData) => {
+                return audioCtx.decodeAudioData(audioData)
+            })
+            .then((buffer) => {
+                callback(buffer, null)
+            })
+            .catch((error) => {
+                callback(null, error)
+            })
+        },
+
         stop() {
             canvasEl.classList.remove('start');
             canvasEl.classList.add('stop');
