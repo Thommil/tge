@@ -1,4 +1,5 @@
 // Copyright (c) 2019 Thomas MILLET. All rights reserved.
+// Copyright 2014 The Go Authors.  All rights reserved.
 
 // +build android ios
 

@@ -1,7 +1,5 @@
 // Copyright (c) 2019 Thomas MILLET. All rights reserved.
-
-// Copyright (c) 2013, Go-SDL2 Authors
-// All rights reserved.
+// Copyright (c) 2013, Go-SDL2 Authors. All rights reserved.
 
 // +build darwin freebsd linux windows
 // +build !android

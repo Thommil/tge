@@ -76,15 +76,15 @@ func (runtime *browserRuntime) GetHost() interface{} {
 
 func (runtime *browserRuntime) GetRenderer() interface{} {
 	glContext := runtime.canvas.Call("getContext", "webgl2")
-	if glContext == js.Undefined() {
+	if glContext == js.Undefined() || glContext == js.Null() {
 		fmt.Println("WARNING: No WebGL2 support")
 		glContext = runtime.canvas.Call("getContext", "webgl")
 	}
-	if glContext == js.Undefined() {
+	if glContext == js.Undefined() || glContext == js.Null() {
 		fmt.Println("WARNING: No WebGL support")
 		glContext = runtime.canvas.Call("getContext", "experimental-webgl")
 	}
-	if glContext == js.Undefined() {
+	if glContext == js.Undefined() || glContext == js.Null() {
 		err := fmt.Errorf("No WebGL support found in brower")
 		fmt.Println(err)
 		panic(err)

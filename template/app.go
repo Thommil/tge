@@ -6,6 +6,7 @@ import (
 	// Runtime package
 	tge "github.com/thommil/tge"
 	//Available plugins - Just uncomment to enable
+	//gesture "github.com/thommil/tge-gesture"
 	//gl "github.com/thommil/tge-gl"
 	//g3n "github.com/thommil/tge-g3n"
 )
@@ -81,7 +82,7 @@ func (app *App) OnTick(elaspedTime time.Duration, syncChan chan<- interface{}) {
 	//
 	// In can be done once per call or several times if you want a progressive rendering
 	//
-	// As data can be shared between Tick and Render loop, a good practice is too handle heavy treatments
+	// As data can be shared between Tick and Render loops, a good practice is too handle heavy treatments
 	// in Tick dedicated data, then copy data to Render dedicated data and send it through the syncChan.
 	//
 	// A good candidate for copy if the reflect.Copy() function:
@@ -113,7 +114,7 @@ func (app *App) OnStop() {
 
 // OnDispose is called when all exit treatments are done for cleaning task (memory, tmp files ...)
 func (app *App) OnDispose() {
-	// Optional but always good practice to clean up evrything before leaving :)
+	// Optional but always good practice to clean up everything before leaving :)
 }
 
 // Main entry point, simply instanciates App and runs it through Runtime

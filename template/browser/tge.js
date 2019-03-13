@@ -88,6 +88,7 @@
 
     window.onload = function(){
         window.go = new Go();
+        window.AudioContext = window.AudioContext || window.webkitAudioContext;
         if(WebAssembly.instantiateStreaming) {
             WebAssembly.instantiateStreaming(fetch("main.wasm"), window.go.importObject).then((result) => {
                 window.go.run(result.instance);
