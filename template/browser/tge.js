@@ -95,6 +95,16 @@
             })
         },
 
+        createMediaAudioElement(audioCtx, path) {
+            let elm = document.createElement('audio')
+            elm.setAttribute('src','./assets/' + path)
+            document.body.appendChild(elm)
+            return {
+                htmlElement : elm,
+                mediaAudioElement : audioCtx.createMediaElementSource(elm)
+            }
+        },
+
         stop() {
             canvasEl.classList.remove('start');
             canvasEl.classList.add('stop');
