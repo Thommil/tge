@@ -50,8 +50,13 @@ func (runtime *browserRuntime) GetAsset(p string) ([]byte, error) {
 			err = fmt.Errorf(args[1].String())
 			doneState <- false
 		} else if size := args[0].Int(); size > 0 {
-			data = make([]byte, size)
-			jsData := js.TypedArrayOf(data)
+			// data = make([]byte, size)
+			// jsData := js.TypedArrayOf(data)
+			// defer jsData.Release()
+			// runtime.jsTge.Call("loadAsset", p, jsData, onLoadAssetCallback)
+			arrayConstructor := js.Global().Get("Uint8Array")
+			jsData := arrayConstructor.New(size)
+			js.CopyBytesToJS(jsData, data)
 			defer jsData.Release()
 			runtime.jsTge.Call("loadAsset", p, jsData, onLoadAssetCallback)
 		} else {
