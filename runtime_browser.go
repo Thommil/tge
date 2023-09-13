@@ -1,5 +1,6 @@
 // Copyright (c) 2019 Thomas MILLET. All rights reserved.
 
+//go:build js
 // +build js
 
 package tge
@@ -35,7 +36,7 @@ func (runtime *browserRuntime) GetAsset(p string) ([]byte, error) {
 	var doneState = make(chan bool)
 
 	onLoadAssetCallback := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if args[0] != js.Null() {
+		if !js.Null().Equal(args[0]) {
 			err = fmt.Errorf(args[1].String())
 			doneState <- false
 		} else {
@@ -45,7 +46,7 @@ func (runtime *browserRuntime) GetAsset(p string) ([]byte, error) {
 	})
 
 	onGetAssetSizeCallback := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if args[1] != js.Null() {
+		if !js.Null().Equal(args[1]) {
 			err = fmt.Errorf(args[1].String())
 			doneState <- false
 		} else if size := args[0].Int(); size > 0 {
@@ -76,15 +77,15 @@ func (runtime *browserRuntime) GetHost() interface{} {
 
 func (runtime *browserRuntime) GetRenderer() interface{} {
 	glContext := runtime.canvas.Call("getContext", "webgl2")
-	if glContext == js.Undefined() || glContext == js.Null() {
+	if js.Undefined().Equal(glContext) || js.Null().Equal(glContext) {
 		fmt.Println("WARNING: No WebGL2 support")
 		glContext = runtime.canvas.Call("getContext", "webgl")
 	}
-	if glContext == js.Undefined() || glContext == js.Null() {
+	if js.Undefined().Equal(glContext) || js.Null().Equal(glContext) {
 		fmt.Println("WARNING: No WebGL support")
 		glContext = runtime.canvas.Call("getContext", "experimental-webgl")
 	}
-	if glContext == js.Undefined() || glContext == js.Null() {
+	if js.Undefined().Equal(glContext) || js.Null().Equal(glContext) {
 		err := fmt.Errorf("No WebGL support found in brower")
 		fmt.Println(err)
 		panic(err)
