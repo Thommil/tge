@@ -54,10 +54,10 @@ func (runtime *browserRuntime) GetAsset(p string) ([]byte, error) {
 			// jsData := js.TypedArrayOf(data)
 			// defer jsData.Release()
 			// runtime.jsTge.Call("loadAsset", p, jsData, onLoadAssetCallback)
-			arrayConstructor := js.Global().Get("Uint8Array")
+			arrayConstructor := js.Global().Get("Uint8Array")ll
 			jsData := arrayConstructor.New(size)
 			js.CopyBytesToJS(jsData, data)
-			defer jsData.Release()
+			//defer jsData.Release()
 			runtime.jsTge.Call("loadAsset", p, jsData, onLoadAssetCallback)
 		} else {
 			err = fmt.Errorf("empty asset")
