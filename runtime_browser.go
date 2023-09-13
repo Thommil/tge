@@ -36,7 +36,7 @@ func (runtime *browserRuntime) GetAsset(p string) ([]byte, error) {
 	var doneState = make(chan bool)
 
 	onLoadAssetCallback := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if !js.Null().Equal(args[0]) {
+		if args[0] != js.Null() {
 			err = fmt.Errorf(args[1].String())
 			doneState <- false
 		} else {
@@ -46,18 +46,13 @@ func (runtime *browserRuntime) GetAsset(p string) ([]byte, error) {
 	})
 
 	onGetAssetSizeCallback := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if !js.Null().Equal(args[1]) {
+		if args[1] != js.Null() {
 			err = fmt.Errorf(args[1].String())
 			doneState <- false
 		} else if size := args[0].Int(); size > 0 {
-			// data = make([]byte, size)
-			// jsData := js.TypedArrayOf(data)
-			// defer jsData.Release()
-			// runtime.jsTge.Call("loadAsset", p, jsData, onLoadAssetCallback)
-			arrayConstructor := js.Global().Get("Uint8Array")ll
-			jsData := arrayConstructor.New(size)
-			js.CopyBytesToJS(jsData, data)
-			//defer jsData.Release()
+			data = make([]byte, size)
+			jsData := js.TypedArrayOf(data)
+			defer jsData.Release()
 			runtime.jsTge.Call("loadAsset", p, jsData, onLoadAssetCallback)
 		} else {
 			err = fmt.Errorf("empty asset")
@@ -82,15 +77,15 @@ func (runtime *browserRuntime) GetHost() interface{} {
 
 func (runtime *browserRuntime) GetRenderer() interface{} {
 	glContext := runtime.canvas.Call("getContext", "webgl2")
-	if js.Undefined().Equal(glContext) || js.Null().Equal(glContext) {
+	if glContext == js.Undefined() || glContext == js.Null() {
 		fmt.Println("WARNING: No WebGL2 support")
 		glContext = runtime.canvas.Call("getContext", "webgl")
 	}
-	if js.Undefined().Equal(glContext) || js.Null().Equal(glContext) {
+	if glContext == js.Undefined() || glContext == js.Null() {
 		fmt.Println("WARNING: No WebGL support")
 		glContext = runtime.canvas.Call("getContext", "experimental-webgl")
 	}
-	if js.Undefined().Equal(glContext) || js.Null().Equal(glContext) {
+	if glContext == js.Undefined() || glContext == js.Null() {
 		err := fmt.Errorf("No WebGL support found in brower")
 		fmt.Println(err)
 		panic(err)
